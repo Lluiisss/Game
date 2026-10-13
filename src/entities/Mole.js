@@ -137,6 +137,7 @@ export class Mole {
     this.flash = 0;
     this.abilityT = this.def.dig || this.def.heal || 0;
     this.fleeCd = 0;
+    this.stunT = 0;
     this.wobble = Math.random() * 10;
     this.sprite = scene.add.image(0, 0, this.def.tex).setOrigin(0.5, 1).setScale(this.def.scale).setVisible(false);
     this.texW = this.sprite.frame.width;
@@ -181,6 +182,7 @@ export class Mole {
   update(dt, upMult) {
     if (this.dead) return;
     if (this.fleeCd > 0) this.fleeCd -= dt;
+    if (this.stunT > 0) this.stunT -= dt;
     if (this.flash > 0) {
       this.flash -= dt;
       if (this.flash <= 0) this.sprite.clearTint();
@@ -200,7 +202,8 @@ export class Mole {
         }
         break;
       case 'up': {
-        this.timer -= dt;
+        // Betäubt (Gummihuhn): kann nicht abtauchen
+        if (this.stunT <= 0) this.timer -= dt;
         this.wobble += dt;
         // Chillen: leichtes Atmen, kurz vor dem Abtauchen nervöses Zittern
         const nervous = this.timer < 0.8;

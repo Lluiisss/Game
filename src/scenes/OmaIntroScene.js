@@ -61,7 +61,7 @@ export class OmaIntroScene extends Phaser.Scene {
     const lines = [
       'Oma hat genug von den Maulwürfen in ihrem Garten!',
       'Sie läuft ab jetzt selbstständig über den Rasen',
-      'und haut die Maulwürfe mit ihrer Handtasche weg.',
+      'und haut die Maulwürfe mit ihrer Bratpfanne weg!',
       'Mit jedem Level wird sie ein bisschen stärker.',
     ];
     const text = this.add

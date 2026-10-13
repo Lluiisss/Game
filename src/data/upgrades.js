@@ -85,7 +85,7 @@ export const UPGRADES = [
   },
   {
     id: 'scare',
-    minLevel: 4,
+    minLevel: 3,
     name: 'Vogelscheuche',
     desc: 'Maulwürfe bleiben 15 % länger oben',
     icon: 'i_scare',
@@ -96,7 +96,7 @@ export const UPGRADES = [
   },
   {
     id: 'seeds',
-    minLevel: 4,
+    minLevel: 3,
     name: 'Rasensamen',
     desc: 'Alle Hügel verlieren von selbst 1,5 Leben pro Sekunde',
     icon: 'i_seeds',
@@ -107,7 +107,7 @@ export const UPGRADES = [
   },
   {
     id: 'gnome',
-    minLevel: 7,
+    minLevel: 3,
     helper: true,
     name: 'Gartenzwerg',
     desc: 'Ein Zwerg bewacht die Stelle und wirft schnell harte Steine auf alles in der Nähe',
@@ -120,7 +120,7 @@ export const UPGRADES = [
   },
   {
     id: 'sprinkler',
-    minLevel: 7,
+    minLevel: 3,
     helper: true,
     name: 'Rasensprenger',
     desc: 'Alle 3 s spritzt Wasser rund um Opa und trifft alles in der Nähe',
@@ -132,7 +132,7 @@ export const UPGRADES = [
   },
   {
     id: 'bees',
-    minLevel: 10,
+    minLevel: 5,
     helper: true,
     name: 'Bienenstock',
     desc: 'Bienen schwärmen aus und stechen Maulwürfe. Jede Stufe: mehr Bienen',
@@ -144,7 +144,7 @@ export const UPGRADES = [
   },
   {
     id: 'hedgehog',
-    minLevel: 10,
+    minLevel: 5,
     helper: true,
     name: 'Igel-Kumpel',
     desc: 'Ein Igel rollt regelmäßig quer über den Rasen und plättet alles auf seinem Weg',
@@ -156,7 +156,7 @@ export const UPGRADES = [
   },
   {
     id: 'mower',
-    minLevel: 13,
+    minLevel: 7,
     helper: true,
     name: 'Mähroboter',
     desc: 'Ein Roboter fährt kreuz und quer und mäht Hügel und Maulwürfe weg',
@@ -169,7 +169,7 @@ export const UPGRADES = [
   },
   {
     id: 'cloud',
-    minLevel: 13,
+    minLevel: 7,
     helper: true,
     name: 'Regenwolke',
     desc: 'Eine Wolke zieht über den Rasen und weicht Hügel und Maulwürfe auf',
@@ -182,7 +182,7 @@ export const UPGRADES = [
   },
   {
     id: 'storm',
-    minLevel: 16,
+    minLevel: 9,
     helper: true,
     name: 'Gewitter-Wetterhahn',
     desc: 'Alle paar Sekunden schlägt ein Blitz in einen Maulwurf ein',
@@ -207,7 +207,7 @@ export const UPGRADES = [
 ];
 
 // Helfer sind seltener als normale Verbesserungen – zuerst soll Opa selbst kämpfen.
-const weightOf = (u) => u.weight ?? (u.helper ? 0.35 : 1);
+const weightOf = (u) => u.weight ?? (u.helper ? 0.8 : 1);
 
 function weightedPick(pool) {
   const total = pool.reduce((a, u) => a + weightOf(u), 0);
@@ -233,14 +233,26 @@ export function rollChoices(scene) {
     choices.push({ type: 'upgrade', up: u, level: (lv[u.id] || 0) + 1 });
   }
 
-  // Neue Waffen sind selten und kommen erst nach und nach.
+  // Spätestens jedes dritte Level ist ein Helfer dabei (falls schon verfügbar)
+  const helpers = UPGRADES.filter(
+    (u) => u.helper && (lv[u.id] || 0) < u.max && scene.level >= u.minLevel && (!u.cond || u.cond(scene)),
+  );
+  if (choices.some((c) => c.up.helper)) scene.levelsSinceHelper = 0;
+  else if (helpers.length && scene.levelsSinceHelper >= 2) {
+    const h = weightedPick(helpers);
+    const slot = choices.length < 3 ? choices.length : Math.floor(Math.random() * 3);
+    choices[slot] = { type: 'upgrade', up: h, level: (lv[h.id] || 0) + 1 };
+    scene.levelsSinceHelper = 0;
+  } else scene.levelsSinceHelper += 1;
+
+  // Neue Waffen: regelmäßig, mit steigender Chance, wenn länger keine kam.
   const avail = Object.values(WEAPONS).filter(
     (w) => w.id !== scene.weapon.id && w.tier >= scene.weapon.tier && scene.level >= w.minLevel,
   );
   const better = avail.filter((w) => w.tier > scene.weapon.tier);
-  const chance = 0.1 + scene.levelsSinceWeaponOffer * 0.05;
+  const chance = 0.25 + scene.levelsSinceWeaponOffer * 0.12;
   if (avail.length && Math.random() < chance) {
-    const from = better.length && Math.random() < 0.6 ? better : avail;
+    const from = better.length && Math.random() < 0.75 ? better : avail;
     const w = from[Math.floor(Math.random() * from.length)];
     const slot = choices.length < 3 ? choices.length : Math.floor(Math.random() * 3);
     choices[slot] = { type: 'weapon', weapon: w };

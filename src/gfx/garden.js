@@ -87,14 +87,12 @@ export function makeGarden(scene) {
       }
       const { dIn, dx, dy } = distIn(x, y);
       if (y >= ly1 + 4) {
-        // Terrasse aus Holzdielen unten
+        // Terrasse aus grauen Waschbeton-Platten
         const ty = y - (ly1 + 4);
-        const row = Math.floor(ty / 5);
-        let col = row % 2 ? '#b8875a' : '#ad7d52';
-        if (ty % 5 === 4) col = '#6e4a2e';
-        else if ((x + row * 37) % 64 === 0) col = '#7a5434';
-        else if (rng() < 0.06) col = '#a07048';
-        if (ty < 2) col = '#5a3a22';
+        const r = rng();
+        let col = r < 0.3 ? '#9a978e' : r < 0.55 ? '#8a877e' : r < 0.8 ? '#a8a59c' : r < 0.93 ? '#7a776f' : '#b8b2a4';
+        if (x % 15 === 0 || ty % 15 === 0) col = '#5e5c56';
+        if (ty < 2) col = '#6e6c66';
         put(x, y, col);
       } else if (dIn <= 3) {
         const along = dx >= dy ? y : x;
@@ -169,20 +167,30 @@ export function makeGarden(scene) {
   // --- Deko links & rechts
   drawCompost(ctx, 512, 70);
   drawBeehive(ctx, 514, 165);
-  drawPond(ctx, rng, 512, 245, 22, 30);
   drawBirdBath(ctx, 30, 112);
   drawVeggies(ctx, rng, 10, 140, 42, 56);
   drawBarrel(ctx, 30, 228);
+  [222, 252, 282].forEach((y) => drawGeraniumPot(ctx, rng, 514, y));
 
-  // --- Terrasse: Tisch mit Sonnenschirm, Grill, Liege, Blumentöpfe
+  // --- Terrasse (nach Foto): Pergola mit Wein und Wagenrad, Sichtschutz,
+  // dunkle Metallmöbel, zugeklappter Sonnenschirm, Geländer mit Geranien
   const ty0 = ly1 + 4;
-  drawGrill(ctx, 44, ty0 + 22);
-  drawTable(ctx, 150, ty0 + 24);
-  drawLounger(ctx, 400, ty0 + 14);
-  [96, 222, 322, 470, 520].forEach((x, i) => drawPot(ctx, rng, x, ty0 + 12 + (i % 2) * 14));
+  drawScreen(ctx, 0, ty0, H);
+  drawChair(ctx, 26, ty0 + 14);
+  drawChair(ctx, 30, ty0 + 18);
+  drawChair(ctx, 70, ty0 + 24);
+  drawTable(ctx, 112, ty0 + 12, 36, 24);
+  drawChair(ctx, 160, ty0 + 20);
+  drawParasol(ctx, 190, ty0 + 26);
+  drawPot(ctx, rng, 250, ty0 + 14);
+  drawChair(ctx, 352, ty0 + 22);
+  drawPot(ctx, rng, 420, ty0 + 28);
+  drawRailing(ctx, rng, 290, W, ty0 + 3);
+  drawPergola(ctx, rng, 10, 236, ty0 + 2, H - 3);
 
   // Zaun links, rechts und oben (mit Gartentor in der Mitte)
   drawFence(ctx, W, ty0, gateX);
+  drawGateArch(ctx, rng, gateX);
 
   // Bäume und Büsche zuletzt, sie ragen über den Zaun
   const trees = [
@@ -194,7 +202,8 @@ export function makeGarden(scene) {
     [512, 26, 16, 'oak'],
     [28, 280, 15, 'apple'],
     [516, 120, 13, 'cherry'],
-    [516, 300, 13, 'bush'],
+    [516, 310, 13, 'bush'],
+    [526, 200, 10, 'bush'],
   ];
   trees.forEach(([x, y, r, type], i) => drawTree(ctx, mulberry32(100 + i), x, y, r, type));
 
@@ -326,78 +335,100 @@ function drawFence(ctx, W, bottom, gateX) {
   }
 }
 
-function drawGrill(ctx, x, y) {
-  rect(ctx, x - 8, y + 6, 18, 3, 'rgba(0,0,0,0.25)');
-  rect(ctx, x - 7, y - 7, 14, 14, '#222222');
-  rect(ctx, x - 6, y - 6, 12, 12, '#3a3a3a');
-  for (let i = -5; i < 6; i += 2) rect(ctx, x - 6, y + i, 12, 1, '#777777');
-  rect(ctx, x - 3, y - 3, 2, 2, '#e8502a');
-  rect(ctx, x + 2, y + 1, 2, 2, '#ff8a1a');
-  rect(ctx, x + 7, y - 1, 6, 2, '#5a3a22');
+const BEAM = '#3a2e26';
+
+function drawWagonWheel(ctx, cx, cy, r) {
+  for (let a = 0; a < Math.PI * 2; a += 0.08) {
+    rect(ctx, Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), 1, 1, BEAM);
+    rect(ctx, Math.round(cx + Math.cos(a) * (r - 1)), Math.round(cy + Math.sin(a) * (r - 1)), 1, 1, BEAM);
+  }
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    for (let d = 1; d < r; d++) rect(ctx, Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), 1, 1, '#5a4636');
+  }
+  rect(ctx, cx - 1, cy - 1, 3, 3, BEAM);
 }
 
-function drawTable(ctx, x, y) {
-  const chair = (cx, cy) => {
-    rect(ctx, cx - 4, cy - 4, 9, 9, '#e8e8e8');
-    rect(ctx, cx - 4, cy - 4, 9, 2, '#bdbdbd');
-  };
-  chair(x - 22, y);
-  chair(x + 22, y);
-  // Schatten & Tisch
-  rect(ctx, x - 12, y + 10, 26, 4, 'rgba(0,0,0,0.2)');
-  for (let dy = -11; dy <= 11; dy++) {
-    const w = Math.round(Math.sqrt(121 - dy * dy));
-    rect(ctx, x - w, y + dy, w * 2, 1, '#f4f4f4');
+function drawVine(ctx, rng, x0, x1, y, density = 0.5) {
+  for (let x = x0; x < x1; x += 2) {
+    if (rng() > density) continue;
+    const dy = Math.floor(rng() * 5) - 2;
+    rect(ctx, x, y + dy, 2, 2, rng() < 0.5 ? '#4f9a3a' : '#6fb84a');
+    if (rng() < 0.05) rect(ctx, x, y + dy + 2, 2, 2, '#6a3a7a');
   }
-  // Sonnenschirm (rot-weiß gestreift)
-  for (let dy = -19; dy <= 19; dy++) {
-    for (let dx = -19; dx <= 19; dx++) {
-      if (dx * dx + dy * dy > 361) continue;
-      const a = Math.atan2(dy, dx);
-      const seg = Math.floor(((a + Math.PI) / (Math.PI * 2)) * 8);
-      rect(ctx, x + dx, y - 14 + dy, 1, 1, seg % 2 ? '#d8352a' : '#f4f4f4');
-    }
-  }
-  rect(ctx, x - 1, y - 15, 3, 3, '#7a5434');
 }
 
-function drawLounger(ctx, x, y) {
-  rect(ctx, x - 2, y + 14, 46, 3, 'rgba(0,0,0,0.2)');
-  rect(ctx, x, y, 42, 14, '#7a5434');
-  rect(ctx, x + 2, y + 2, 38, 10, '#3b8fd0');
-  for (let i = 4; i < 40; i += 6) rect(ctx, x + i, y + 2, 2, 10, '#f4f4f4');
-  rect(ctx, x + 30, y + 3, 8, 8, '#ffffff');
+function drawPergola(ctx, rng, x0, x1, y0, y1) {
+  for (let x = x0 + 6; x < x1; x += 14) rect(ctx, x, y0, 2, y1 - y0, 'rgba(30,22,16,0.75)');
+  rect(ctx, x0, y0, x1 - x0, 3, BEAM);
+  rect(ctx, x0, y1 - 3, x1 - x0, 3, BEAM);
+  for (const x of [x0, x1 - 4]) {
+    rect(ctx, x, y0 - 1, 5, 5, BEAM);
+    rect(ctx, x, y1 - 4, 5, 5, BEAM);
+  }
+  drawVine(ctx, rng, x0, x1, y0 + 1, 0.7);
+  drawVine(ctx, rng, x0 + 40, x1 - 30, y1 - 2, 0.35);
+  drawWagonWheel(ctx, x1 - 26, y0 + 8, 7);
+}
+
+function drawScreen(ctx, x, y0, y1) {
+  rect(ctx, x, y0, 8, y1 - y0, '#2a2420');
+  for (let y = y0; y < y1; y += 4) rect(ctx, x, y, 8, 1, '#4a3e34');
+  for (let i = 0; i < 8; i += 4) rect(ctx, x + i, y0, 1, y1 - y0, '#4a3e34');
+}
+
+function drawChair(ctx, x, y) {
+  rect(ctx, x - 5, y + 6, 12, 2, 'rgba(0,0,0,0.25)');
+  rect(ctx, x - 5, y - 6, 11, 3, '#2a2c30');
+  rect(ctx, x - 5, y - 3, 11, 9, '#3a3d42');
+  for (let i = -4; i < 6; i += 2) for (let j = -2; j < 5; j += 2) rect(ctx, x + i, y + j, 1, 1, '#5a5e64');
+}
+
+function drawTable(ctx, x, y, w, h) {
+  rect(ctx, x + 2, y + h, w, 3, 'rgba(0,0,0,0.25)');
+  rect(ctx, x, y, w, h, '#2a2c30');
+  rect(ctx, x + 2, y + 2, w - 4, h - 4, '#3a3d42');
+  for (let i = 3; i < w - 3; i += 3) for (let j = 3; j < h - 3; j += 3) rect(ctx, x + i, y + j, 1, 1, '#5a5e64');
+}
+
+function drawParasol(ctx, x, y) {
+  rect(ctx, x - 6, y - 6, 12, 12, '#c8c8c4');
+  rect(ctx, x - 6, y + 5, 12, 1, '#9a9a96');
+  rect(ctx, x - 3, y - 3, 6, 6, '#9aa0a8');
+  rect(ctx, x - 2, y - 4, 4, 8, '#9aa0a8');
+  rect(ctx, x - 1, y - 2, 2, 2, '#c4cad2');
+}
+
+function drawRailing(ctx, rng, x0, x1, y) {
+  // Blumenkasten mit Geranien vor dem schwarzen Geländer
+  rect(ctx, x0, y + 2, x1 - x0, 4, '#5a4636');
+  for (let x = x0 + 1; x < x1 - 1; x += 2) {
+    rect(ctx, x, y + 1 - Math.floor(rng() * 2), 2, 2, rng() < 0.5 ? '#3f8a2a' : '#56b04a');
+    if (rng() < 0.45) rect(ctx, x, y - Math.floor(rng() * 2), 2, 2, rng() < 0.6 ? '#ff3a8a' : '#e8302a');
+  }
+  rect(ctx, x0, y + 7, x1 - x0, 2, '#1a1a1a');
+  for (let x = x0; x < x1; x += 10) rect(ctx, x, y + 6, 2, 4, '#1a1a1a');
+}
+
+function drawGeraniumPot(ctx, rng, x, y) {
+  rect(ctx, x - 5, y, 10, 7, '#c4622d');
+  fillEllipse(ctx, rng, x, y - 3, 7, 5, (dx, dy, d, r) => (r < 0.3 ? (r < 0.15 ? '#ff3a8a' : '#e8302a') : d < 0.5 ? '#56b04a' : '#3f8a2a'));
+}
+
+function drawGateArch(ctx, rng, gateX) {
+  // Pergola-Bogen über dem Gartentor mit Wein und Wagenrädern
+  rect(ctx, gateX - 22, 1, 44, 3, BEAM);
+  rect(ctx, gateX - 22, 9, 44, 3, BEAM);
+  drawVine(ctx, rng, gateX - 22, gateX + 22, 2, 0.8);
+  drawVine(ctx, rng, gateX - 22, gateX + 22, 10, 0.6);
+  drawWagonWheel(ctx, gateX - 30, 8, 7);
+  drawWagonWheel(ctx, gateX + 30, 8, 7);
 }
 
 function drawPot(ctx, rng, x, y) {
   rect(ctx, x - 5, y, 10, 8, '#c4622d');
   rect(ctx, x - 6, y - 1, 12, 2, '#a84e22');
   fillEllipse(ctx, rng, x, y - 4, 7, 5, (dx, dy, d, r) => (r < 0.15 ? '#ff5a7a' : d < 0.4 ? '#56b04a' : '#3f8a2a'));
-}
-
-function drawPond(ctx, rng, cx, cy, rx, ry) {
-  fillEllipse(ctx, rng, cx, cy, rx + 2, ry + 2, (x, y, d) => (d > 0.85 ? '#8a8a80' : '#6e6e66'));
-  fillEllipse(ctx, rng, cx, cy, rx, ry, (x, y, d, r) => {
-    if (d > 0.8) return '#2a6fa8';
-    if (r < 0.04) return '#9fd8ff';
-    return y < -ry * 0.3 ? '#3b8fd0' : '#337fc0';
-  });
-  const pads = [
-    [-20, -2],
-    [6, 4],
-    [24, -3],
-  ];
-  pads.forEach(([dx, dy]) => {
-    fillEllipse(ctx, rng, cx + dx, cy + dy, 4, 2, () => '#3f9c3a');
-    rect(ctx, cx + dx + 1, cy + dy - 1, 2, 1, '#2b6e28');
-  });
-  rect(ctx, cx + 7, cy + 3, 2, 1, '#ff8cc6');
-  // Schilf
-  for (let i = 0; i < 6; i++) {
-    const x = cx + rx - 4 + i * 2;
-    rect(ctx, x, cy - 8 + (i % 3), 1, 9, '#5a8a30');
-    rect(ctx, x, cy - 9 + (i % 3), 1, 3, '#6e4524');
-  }
 }
 
 function drawVeggies(ctx, rng, x, y, w, h) {

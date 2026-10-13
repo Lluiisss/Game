@@ -27,11 +27,14 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
   (Babys beim Tod) und Boss-Maulwürfe.
 - XP und Level-Ups: Jedes Level gibt automatisch etwas mehr Werte, dazu 3 Garten-Upgrades
   zur Auswahl.
-- Neue Nahkampf-Gartengeräte kommen selten und nach und nach: Spaten, Heckenschere,
-  Mistgabel, Vorschlaghammer, Sense, Motorsense, Kettensäge.
+- Regelmäßig neue (teils alberne) Nahkampf-Gartengeräte mit Spezialeffekten: Spaten,
+  Heckenschere, Gummihuhn (betäubt, QUIEK!), Riesen-Zucchini, Mistgabel, Gießkanne
+  (PLATSCH!), Schlauch-Peitsche (KNALL!), Sense, Vorschlaghammer, Zwergen-Keule (BONK!),
+  Motorsense und Kettensäge (BRUMMM!).
 - Helfer (Gartenzwerg, Rasensprenger, Bienen, Igel, Mähroboter, Regenwolke,
-  Gewitter-Wetterhahn) gibt es erst später und seltener – zuerst kämpft Opa selbst.
-- Ab **Level 15** kommt **Oma** (groß angekündigt) durch das Gartentor und hilft mit.
+  Gewitter-Wetterhahn) gibt es ab Level 3, spätestens jedes dritte Level ist einer im Angebot.
+- Ab **Level 15** kommt **Oma** (groß angekündigt) durch das Gartentor und haut mit
+  ihrer Bratpfanne mit.
 - Chiptune-Musik, die bei Gefahr und Bossen schneller und intensiver wird.
 - Die **Bestenliste** (Top 10) wird lokal im Browser gespeichert (localStorage).
 
