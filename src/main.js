@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import '@fontsource/vt323';
 import '@fontsource/press-start-2p';
 import { GAME_W, GAME_H } from './config.js';
+import { sfx } from './audio/sfx.js';
 import { BootScene } from './scenes/BootScene.js';
 import { MenuScene } from './scenes/MenuScene.js';
 import { GameScene } from './scenes/GameScene.js';
@@ -32,6 +33,11 @@ async function loadFonts() {
     timeout,
   ]).catch(() => {});
 }
+
+// Browser erlauben Ton erst nach der ersten Eingabe
+const unlock = () => sfx.unlock();
+window.addEventListener('keydown', unlock, { once: true });
+window.addEventListener('pointerdown', unlock, { once: true });
 
 loadFonts().then(() => {
   window.game = new Phaser.Game(config);

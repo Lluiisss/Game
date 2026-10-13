@@ -45,10 +45,10 @@ export const UPGRADES = [
   {
     id: 'arc',
     name: 'Weiter Schwung',
-    desc: '+30° Schwungbreite bzw. größerer Aufschlag-Radius',
+    desc: '+30° Schwungbreite bzw. größerer Aufschlag- und Flammenbereich',
     icon: 'i_arc',
     max: 4,
-    cond: (scene) => scene.weapon.type === 'swing' || scene.weapon.type === 'slam',
+    cond: (scene) => ['swing', 'slam', 'cone'].includes(scene.weapon.type),
     apply: (s) => {
       s.arcBonus += 30;
     },
@@ -106,9 +106,9 @@ export const UPGRADES = [
   {
     id: 'gnome',
     name: 'Gartenzwerg',
-    desc: 'Ein Zwerg bewacht die Stelle und wirft Steinchen auf alles in der Nähe',
+    desc: 'Ein Zwerg bewacht die Stelle und wirft schnell harte Steine auf alles in der Nähe',
     icon: 'gnome',
-    max: 4,
+    max: 5,
     apply: (s, scene) => {
       s.gnomes += 1;
       scene.placeGnome();
@@ -122,6 +122,69 @@ export const UPGRADES = [
     max: 3,
     apply: (s) => {
       s.sprinkler += 1;
+    },
+  },
+  {
+    id: 'multi',
+    name: 'Doppelpack',
+    desc: '+1 Geschoss pro Schuss (Schusswaffen)',
+    icon: 'i_multi',
+    max: 3,
+    cond: (scene) => scene.weapon.type === 'shot',
+    apply: (s) => {
+      s.multi += 1;
+    },
+  },
+  {
+    id: 'bees',
+    name: 'Bienenstock',
+    desc: 'Bienen schwärmen aus und stechen Maulwürfe. Jede Stufe: mehr Bienen',
+    icon: 'i_bees',
+    max: 5,
+    apply: (s) => {
+      s.bees += 1;
+    },
+  },
+  {
+    id: 'hedgehog',
+    name: 'Igel-Kumpel',
+    desc: 'Ein Igel rollt regelmäßig quer über den Rasen und plättet alles auf seinem Weg',
+    icon: 'i_hedgehog',
+    max: 4,
+    apply: (s) => {
+      s.hedgehog += 1;
+    },
+  },
+  {
+    id: 'mower',
+    name: 'Mähroboter',
+    desc: 'Ein Roboter fährt kreuz und quer und mäht Hügel und Maulwürfe weg',
+    icon: 'i_mower',
+    max: 3,
+    apply: (s, scene) => {
+      s.mowers += 1;
+      scene.addMower();
+    },
+  },
+  {
+    id: 'cloud',
+    name: 'Regenwolke',
+    desc: 'Eine Wolke zieht über den Rasen und weicht Hügel und Maulwürfe auf',
+    icon: 'i_cloud',
+    max: 3,
+    apply: (s, scene) => {
+      s.clouds += 1;
+      scene.addCloud();
+    },
+  },
+  {
+    id: 'storm',
+    name: 'Gewitter-Wetterhahn',
+    desc: 'Alle paar Sekunden schlägt ein Blitz in einen Maulwurf ein',
+    icon: 'i_storm',
+    max: 5,
+    apply: (s) => {
+      s.storm += 1;
     },
   },
   {
@@ -158,13 +221,16 @@ export function rollChoices(scene) {
     choices.push({ type: 'upgrade', up: u, level: (lv[u.id] || 0) + 1 });
   }
 
-  // Neue Waffen sind seltener – die Chance steigt, je länger keine angeboten wurde.
+  // Neue Waffen: seltener als Upgrades, aber spätestens alle paar Level eine.
+  // Bevorzugt werden stärkere Waffen (höherer Tier).
   const avail = Object.values(WEAPONS).filter(
     (w) => w.id !== scene.weapon.id && w.tier >= scene.weapon.tier && scene.level >= w.minLevel,
   );
-  const chance = 0.15 + scene.levelsSinceWeaponOffer * 0.06;
+  const better = avail.filter((w) => w.tier > scene.weapon.tier);
+  const chance = 0.3 + scene.levelsSinceWeaponOffer * 0.15;
   if (avail.length && Math.random() < chance) {
-    const w = avail[Math.floor(Math.random() * avail.length)];
+    const from = better.length && Math.random() < 0.8 ? better : avail;
+    const w = from[Math.floor(Math.random() * from.length)];
     const slot = choices.length < 3 ? choices.length : Math.floor(Math.random() * 3);
     choices[slot] = { type: 'weapon', weapon: w };
     scene.levelsSinceWeaponOffer = 0;

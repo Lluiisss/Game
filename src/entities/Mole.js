@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { PX } from '../config.js';
 
 export const MOLE_KINDS = {
-  normal: { tex: 'mole', hpMult: 1, up: [2.5, 5.5], under: [1.2, 3.0], xp: 3, scale: PX, r: 13 },
-  fast: { tex: 'mole_fast', hpMult: 0.6, up: [1.0, 2.2], under: [0.6, 1.6], xp: 4, scale: PX, r: 13 },
-  chill: { tex: 'mole_chill', hpMult: 1.2, up: [5.0, 9.0], under: [1.5, 3.5], xp: 4, scale: PX, r: 13 },
-  boss: { tex: 'mole_boss', hpMult: 8, up: [5.0, 8.0], under: [2.0, 4.0], xp: 30, scale: PX * 1.7, r: 24, boss: true },
+  normal: { tex: 'mole', hpMult: 1, up: [2.5, 5.5], under: [1.2, 3.0], xp: 3, scale: PX, r: 20 },
+  fast: { tex: 'mole_fast', hpMult: 0.6, up: [1.0, 2.2], under: [0.6, 1.6], xp: 4, scale: PX, r: 20 },
+  chill: { tex: 'mole_chill', hpMult: 1.2, up: [5.0, 9.0], under: [1.5, 3.5], xp: 4, scale: PX, r: 20 },
+  boss: { tex: 'mole_boss', hpMult: 8, up: [5.0, 8.0], under: [2.0, 4.0], xp: 30, scale: PX * 1.7, r: 34, boss: true },
 };
 
 const EMERGE_TIME = 0.35;
@@ -25,6 +25,9 @@ export class Mole {
     this.hill = null;
     this.dead = false;
     this.flash = 0;
+    this.burnT = 0;
+    this.burnDps = 0;
+    this.burnAcc = 0;
     this.wobble = Math.random() * 10;
     this.sprite = scene.add.image(0, 0, this.def.tex).setOrigin(0.5, 1).setScale(this.def.scale).setVisible(false);
     this.texW = this.sprite.frame.width;
@@ -70,7 +73,10 @@ export class Mole {
     if (this.dead) return;
     if (this.flash > 0) {
       this.flash -= dt;
-      if (this.flash <= 0) this.sprite.clearTint();
+      if (this.flash <= 0) {
+        if (this.burnT > 0) this.sprite.setTint(0xff9a5a);
+        else this.sprite.clearTint();
+      }
     }
     switch (this.state) {
       case 'underground':

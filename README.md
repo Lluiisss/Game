@@ -33,8 +33,18 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
   Auswahl: Schaden, Laufgeschwindigkeit, Reichweite, Angriffstempo, Schwungbreite,
   Hügelschaden, Krit-Chance, XP-Bonus, Vogelscheuche, Rasensamen, Gartenzwerg-Wache,
   Rasensprenger, Schubkarre …
-- Seltener werden **neue Gartengeräte** angeboten: Spaten, Heckenschere,
-  Vorschlaghammer, Wasserschlauch und Motorsense – jedes mit eigener Angriffsart.
+- Mit jedem Level steigen Schaden, Angriffstempo, Reichweite und Laufgeschwindigkeit
+  automatisch ein wenig.
+- Regelmäßig werden **neue Gartengeräte** angeboten, jedes krasser als das letzte:
+  Spaten, Heckenschere, Vorschlaghammer, Wasserschlauch, Motorsense,
+  Kastanien-Schleuder, Kürbis-Kanone, Unkrautbrenner und zum Schluss der
+  **Raketenwerfer**. Schusswaffen zielen automatisch.
+- Helfer-Items: Gartenzwerg, Rasensprenger, Bienenstock, Igel-Kumpel, Mähroboter,
+  Regenwolke und Gewitter-Wetterhahn.
+- Ab **Level 15** kommt **Oma** dazu, läuft selbstständig herum und haut mit ihrer
+  Handtasche zu. Sie levelt mit.
+- Treibende Chiptune-Musik, die bei Gefahr und Boss-Maulwürfen schneller und
+  intensiver wird.
 - Die **Bestenliste** (Top 10) wird lokal im Browser gespeichert (localStorage).
 
 ## Entwicklung

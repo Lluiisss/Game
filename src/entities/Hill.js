@@ -19,7 +19,7 @@ export class Hill {
     const f = this.img.frame;
     this.w = f.width * PX;
     this.h = f.height * PX;
-    this.radius = this.w * 0.42;
+    this.radius = this.w * 0.5;
     // Das Loch oben auf dem Hügel – hier kommt der Maulwurf raus.
     this.holeY = y - this.h + 4.5 * PX;
 

@@ -54,11 +54,11 @@ export class GameOverScene extends Phaser.Scene {
       ['Gesamtschaden', String(r.damage)],
     ];
     stats.forEach(([k, v], i) => {
-      this.add.text(250, 150 + i * 30, k, { fontFamily: FONT, fontSize: '26px', color: '#c9b99a' });
-      this.add.text(710, 150 + i * 30, v, { fontFamily: FONT, fontSize: '26px', color: '#ffffff' }).setOrigin(1, 0);
+      this.add.text(GAME_W / 2 - 290, 160 + i * 32, k, { fontFamily: FONT, fontSize: '26px', color: '#c9b99a' });
+      this.add.text(GAME_W / 2 + 170, 160 + i * 32, v, { fontFamily: FONT, fontSize: '26px', color: '#ffffff' }).setOrigin(1, 0);
     });
     this.add
-      .text(GAME_W / 2, 350, `PUNKTE: ${r.score}`, {
+      .text(GAME_W / 2, 380, `PUNKTE: ${r.score}`, {
         fontFamily: TITLE_FONT,
         fontSize: '26px',
         color: '#ffe14a',
@@ -78,7 +78,7 @@ export class GameOverScene extends Phaser.Scene {
     this.lower.removeAll(true);
     this.lower.add(
       this.add
-        .text(GAME_W / 2, 420, 'Neuer Eintrag in der Bestenliste! Wie heißt du?', {
+        .text(GAME_W / 2, 460, 'Neuer Eintrag in der Bestenliste! Wie heißt du?', {
           fontFamily: FONT,
           fontSize: '30px',
           color: '#9fe870',
@@ -86,16 +86,16 @@ export class GameOverScene extends Phaser.Scene {
         .setOrigin(0.5),
     );
     const box = this.add.graphics();
-    box.fillStyle(0x1e140d, 1).fillRect(GAME_W / 2 - 180, 460, 360, 56);
-    box.lineStyle(3, 0xffe14a, 1).strokeRect(GAME_W / 2 - 180, 460, 360, 56);
+    box.fillStyle(0x1e140d, 1).fillRect(GAME_W / 2 - 180, 500, 360, 56);
+    box.lineStyle(3, 0xffe14a, 1).strokeRect(GAME_W / 2 - 180, 500, 360, 56);
     this.lower.add(box);
     this.nameText = this.add
-      .text(GAME_W / 2, 488, '', { fontFamily: FONT, fontSize: '40px', color: '#ffffff' })
+      .text(GAME_W / 2, 528, '', { fontFamily: FONT, fontSize: '40px', color: '#ffffff' })
       .setOrigin(0.5);
     this.lower.add(this.nameText);
     this.lower.add(
       this.add
-        .text(GAME_W / 2, 545, 'Tippen · Backspace löschen · ENTER speichern', {
+        .text(GAME_W / 2, 585, 'Tippen · Backspace löschen · ENTER speichern', {
           fontFamily: FONT,
           fontSize: '24px',
           color: '#c9b99a',
@@ -126,11 +126,11 @@ export class GameOverScene extends Phaser.Scene {
     const scores = loadScores();
     this.lower.add(
       this.add
-        .text(GAME_W / 2, 395, 'BESTENLISTE', { fontFamily: TITLE_FONT, fontSize: '16px', color: '#9fe870' })
+        .text(GAME_W / 2, 435, 'BESTENLISTE', { fontFamily: TITLE_FONT, fontSize: '16px', color: '#9fe870' })
         .setOrigin(0.5),
     );
     this.lower.add(
-      this.add.text(190, 418, row(' #', 'Name', 'Punkte', 'Maulw.', 'Hügel', 'Zeit', 'Lv'), {
+      this.add.text(GAME_W / 2 - 290, 460, row(' #', 'Name', 'Punkte', 'Maulw.', 'Hügel', 'Zeit', 'Lv'), {
         fontFamily: FONT,
         fontSize: '23px',
         color: '#c9b99a',
@@ -140,7 +140,7 @@ export class GameOverScene extends Phaser.Scene {
       const line = row(String(i + 1).padStart(2, ' '), s.name, s.score, s.kills, s.hills, formatTime(s.time), s.level);
       const mine = i === this.myIndex;
       this.lower.add(
-        this.add.text(190, 442 + i * 23, line, {
+        this.add.text(GAME_W / 2 - 290, 486 + i * 25, line, {
           fontFamily: FONT,
           fontSize: '23px',
           color: mine ? '#ffe14a' : '#f3ead2',
@@ -150,12 +150,12 @@ export class GameOverScene extends Phaser.Scene {
     if (!scores.length) {
       this.lower.add(
         this.add
-          .text(GAME_W / 2, 500, 'Noch keine Einträge.', { fontFamily: FONT, fontSize: '26px', color: '#c9b99a' })
+          .text(GAME_W / 2, 540, 'Noch keine Einträge.', { fontFamily: FONT, fontSize: '26px', color: '#c9b99a' })
           .setOrigin(0.5),
       );
     }
     const hint = this.add
-      .text(GAME_W / 2, 700, 'ENTER / LEERTASTE: Nochmal spielen   ·   ESC: Hauptmenü', {
+      .text(GAME_W / 2, 792, 'ENTER / LEERTASTE: Nochmal spielen   ·   ESC: Hauptmenü', {
         fontFamily: FONT,
         fontSize: '28px',
         color: '#ffffff',

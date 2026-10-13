@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_W, GAME_H, FONT, TITLE_FONT } from '../config.js';
 import { TYPE_LABEL } from '../data/weapons.js';
+import { levelBonus } from '../difficulty.js';
 import { sfx } from '../audio/sfx.js';
 
 const CARD_W = 260;
@@ -15,6 +16,7 @@ export class LevelUpScene extends Phaser.Scene {
     this.choices = data.choices;
     this.onPick = data.onPick;
     this.level = data.level;
+    this.omaUnlocked = data.omaUnlocked;
     this.sel = 0;
     this.ready = false;
     this.done = false;
@@ -23,7 +25,7 @@ export class LevelUpScene extends Phaser.Scene {
   create() {
     this.add.rectangle(0, 0, GAME_W, GAME_H, 0x0d0804, 0.7).setOrigin(0);
     const title = this.add
-      .text(GAME_W / 2, 150, `LEVEL ${this.level}!`, {
+      .text(GAME_W / 2, 186, `LEVEL ${this.level}!`, {
         fontFamily: TITLE_FONT,
         fontSize: '36px',
         color: '#9fe870',
@@ -34,23 +36,45 @@ export class LevelUpScene extends Phaser.Scene {
       .setScale(0.4);
     this.tweens.add({ targets: title, scale: 1, duration: 300, ease: 'Back.Out' });
     this.add
-      .text(GAME_W / 2, 200, 'Such dir eine Verbesserung aus', {
+      .text(GAME_W / 2, 236, 'Such dir eine Verbesserung aus', {
         fontFamily: FONT,
         fontSize: '30px',
         color: '#f3ead2',
       })
       .setOrigin(0.5);
+    const b = levelBonus(this.level);
+    const pctStr = (v) => `${Math.round((v - 1) * 100)} %`;
+    this.add
+      .text(
+        GAME_W / 2,
+        272,
+        `Level-Bonus gesamt: Schaden +${pctStr(b.dmg)} · Tempo +${pctStr(b.rate)} · Reichweite +${pctStr(b.range)} · Laufen +${pctStr(b.speed)}`,
+        { fontFamily: FONT, fontSize: '22px', color: '#9fe870' },
+      )
+      .setOrigin(0.5);
+    if (this.omaUnlocked) {
+      this.add.image(GAME_W / 2 - 250, 110, 'i_oma').setScale(4);
+      this.add
+        .text(GAME_W / 2 - 210, 110, 'Oma ist freigeschaltet und hilft ab jetzt mit!', {
+          fontFamily: FONT,
+          fontSize: '28px',
+          color: '#e8c7ff',
+          stroke: '#1e140d',
+          strokeThickness: 4,
+        })
+        .setOrigin(0, 0.5);
+    }
 
     const n = this.choices.length;
     const gap = 30;
     const total = n * CARD_W + (n - 1) * gap;
     this.cards = this.choices.map((c, i) => {
       const x = GAME_W / 2 - total / 2 + CARD_W / 2 + i * (CARD_W + gap);
-      return this.makeCard(c, i, x, 420);
+      return this.makeCard(c, i, x, 470);
     });
 
     this.add
-      .text(GAME_W / 2, 625, '← → auswählen   ·   LEERTASTE / ENTER bestätigen   ·   oder 1 / 2 / 3', {
+      .text(GAME_W / 2, 690, '← → auswählen   ·   LEERTASTE / ENTER bestätigen   ·   oder 1 / 2 / 3', {
         fontFamily: FONT,
         fontSize: '24px',
         color: '#c9b99a',
@@ -177,7 +201,7 @@ export class LevelUpScene extends Phaser.Scene {
     this.cards.forEach((c, idx) => {
       this.drawCard(c, idx === i);
       this.tweens.killTweensOf(c);
-      this.tweens.add({ targets: c, scale: idx === i ? 1.06 : 0.96, y: idx === i ? 410 : 420, duration: 120 });
+      this.tweens.add({ targets: c, scale: idx === i ? 1.06 : 0.96, y: idx === i ? 460 : 470, duration: 120 });
     });
   }
 

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_W, GAME_H, FONT, TITLE_FONT } from '../config.js';
+import { music } from '../audio/music.js';
 
 export class PauseScene extends Phaser.Scene {
   constructor() {
@@ -33,6 +34,7 @@ export class PauseScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-P', resume);
     this.input.keyboard.on('keydown-ESC', resume);
     this.input.keyboard.on('keydown-Q', () => {
+      music.stop();
       this.scene.stop('Game');
       this.scene.start('Menu');
     });
