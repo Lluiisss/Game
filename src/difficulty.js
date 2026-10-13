@@ -1,3 +1,5 @@
+import { MOLE_KINDS } from './entities/Mole.js';
+
 // Alle Balancing-Kurven an einem Ort. t = überlebte Zeit in Sekunden.
 
 export const FIRST_BOSS = 90;
@@ -33,10 +35,15 @@ export function xpForLevel(level) {
   return Math.round(8 + 6 * l + 0.7 * l * l);
 }
 
+// Zufällige Maulwurfart, die zur Spielzeit passt (neue Arten kommen nach und nach)
 export function rollKind(t) {
-  const r = Math.random();
-  if (t > 50 && r < 0.18 + Math.min(0.12, t / 3000)) return 'fast';
-  if (r > 0.82) return 'chill';
+  const pool = Object.entries(MOLE_KINDS).filter(([, k]) => k.weight > 0 && t >= k.from);
+  const total = pool.reduce((a, [, k]) => a + k.weight, 0);
+  let r = Math.random() * total;
+  for (const [id, k] of pool) {
+    r -= k.weight;
+    if (r <= 0) return id;
+  }
   return 'normal';
 }
 
@@ -48,10 +55,10 @@ export function computeScore({ kills, bossKills, hillsRemoved, time }) {
 export function levelBonus(level) {
   const l = level - 1;
   return {
-    dmg: 1 + 0.04 * l,
-    rate: 1 + 0.015 * l,
-    range: 1 + Math.min(0.3, 0.01 * l),
-    speed: 1 + Math.min(0.25, 0.008 * l),
+    dmg: 1 + 0.025 * l,
+    rate: 1 + 0.01 * l,
+    range: 1 + Math.min(0.15, 0.005 * l),
+    speed: 1 + Math.min(0.2, 0.006 * l),
   };
 }
 

@@ -9,6 +9,7 @@ import { GameScene } from './scenes/GameScene.js';
 import { LevelUpScene } from './scenes/LevelUpScene.js';
 import { PauseScene } from './scenes/PauseScene.js';
 import { GameOverScene } from './scenes/GameOverScene.js';
+import { OmaIntroScene } from './scenes/OmaIntroScene.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -21,7 +22,7 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, MenuScene, GameScene, LevelUpScene, PauseScene, GameOverScene],
+  scene: [BootScene, MenuScene, GameScene, LevelUpScene, PauseScene, GameOverScene, OmaIntroScene],
 };
 
 // Pixel-Schriften laden, bevor Phaser Texte rendert.

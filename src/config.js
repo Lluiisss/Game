@@ -5,12 +5,12 @@ export const GAME_H = 832;
 // Pixelart wird nativ klein gezeichnet und mit diesem Faktor hochskaliert.
 export const PX = 2;
 
-export const HUD_H = 64;
+export const HUD_H = 88;
 
 // Der Rasen (Spielfeld). Drumherum liegt der Garten mit Zaun, Bäumen und Beeten.
 export const LAWN = {
   x: 128,
-  y: HUD_H + 112,
+  y: HUD_H + 100,
   w: 832,
   h: 544,
 };
@@ -21,12 +21,15 @@ export const FONT = '"VT323", monospace';
 export const TITLE_FONT = '"Press Start 2P", monospace';
 
 // Ab dieser "Hügellast" ist der Rasen ruiniert (normaler Hügel = 1, Boss-Hügel = 3).
-export const MAX_HILL_LOAD = 45;
+export const MAX_HILL_LOAD = 50;
 
 export const PLAYER_SPEED = 140;
 
 // Position des Bienenstocks im Garten (Bildschirmkoordinaten)
-export const BEEHIVE = { x: 1028, y: HUD_H + 320 };
+export const BEEHIVE = { x: 1028, y: HUD_H + 330 };
 
 // Ab diesem Level kommt Oma zu Hilfe
 export const OMA_LEVEL = 15;
+
+// Gartentor oben in der Mitte (hier kommt Oma herein)
+export const GATE = { x: GAME_W / 2, y: HUD_H + 22 };

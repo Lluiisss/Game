@@ -45,10 +45,10 @@ export const UPGRADES = [
   {
     id: 'arc',
     name: 'Weiter Schwung',
-    desc: '+30° Schwungbreite bzw. größerer Aufschlag- und Flammenbereich',
+    desc: '+30° Schwungbreite bzw. größerer Aufschlag-Radius',
     icon: 'i_arc',
     max: 4,
-    cond: (scene) => ['swing', 'slam', 'cone'].includes(scene.weapon.type),
+    cond: (scene) => ['swing', 'slam'].includes(scene.weapon.type),
     apply: (s) => {
       s.arcBonus += 30;
     },
@@ -85,6 +85,7 @@ export const UPGRADES = [
   },
   {
     id: 'scare',
+    minLevel: 4,
     name: 'Vogelscheuche',
     desc: 'Maulwürfe bleiben 15 % länger oben',
     icon: 'i_scare',
@@ -95,6 +96,7 @@ export const UPGRADES = [
   },
   {
     id: 'seeds',
+    minLevel: 4,
     name: 'Rasensamen',
     desc: 'Alle Hügel verlieren von selbst 1,5 Leben pro Sekunde',
     icon: 'i_seeds',
@@ -105,6 +107,8 @@ export const UPGRADES = [
   },
   {
     id: 'gnome',
+    minLevel: 7,
+    helper: true,
     name: 'Gartenzwerg',
     desc: 'Ein Zwerg bewacht die Stelle und wirft schnell harte Steine auf alles in der Nähe',
     icon: 'gnome',
@@ -116,6 +120,8 @@ export const UPGRADES = [
   },
   {
     id: 'sprinkler',
+    minLevel: 7,
+    helper: true,
     name: 'Rasensprenger',
     desc: 'Alle 3 s spritzt Wasser rund um Opa und trifft alles in der Nähe',
     icon: 'i_sprinkler',
@@ -125,18 +131,9 @@ export const UPGRADES = [
     },
   },
   {
-    id: 'multi',
-    name: 'Doppelpack',
-    desc: '+1 Geschoss pro Schuss (Schusswaffen)',
-    icon: 'i_multi',
-    max: 3,
-    cond: (scene) => scene.weapon.type === 'shot',
-    apply: (s) => {
-      s.multi += 1;
-    },
-  },
-  {
     id: 'bees',
+    minLevel: 10,
+    helper: true,
     name: 'Bienenstock',
     desc: 'Bienen schwärmen aus und stechen Maulwürfe. Jede Stufe: mehr Bienen',
     icon: 'i_bees',
@@ -147,6 +144,8 @@ export const UPGRADES = [
   },
   {
     id: 'hedgehog',
+    minLevel: 10,
+    helper: true,
     name: 'Igel-Kumpel',
     desc: 'Ein Igel rollt regelmäßig quer über den Rasen und plättet alles auf seinem Weg',
     icon: 'i_hedgehog',
@@ -157,6 +156,8 @@ export const UPGRADES = [
   },
   {
     id: 'mower',
+    minLevel: 13,
+    helper: true,
     name: 'Mähroboter',
     desc: 'Ein Roboter fährt kreuz und quer und mäht Hügel und Maulwürfe weg',
     icon: 'i_mower',
@@ -168,6 +169,8 @@ export const UPGRADES = [
   },
   {
     id: 'cloud',
+    minLevel: 13,
+    helper: true,
     name: 'Regenwolke',
     desc: 'Eine Wolke zieht über den Rasen und weicht Hügel und Maulwürfe auf',
     icon: 'i_cloud',
@@ -179,6 +182,8 @@ export const UPGRADES = [
   },
   {
     id: 'storm',
+    minLevel: 16,
+    helper: true,
     name: 'Gewitter-Wetterhahn',
     desc: 'Alle paar Sekunden schlägt ein Blitz in einen Maulwurf ein',
     icon: 'i_storm',
@@ -201,11 +206,14 @@ export const UPGRADES = [
   },
 ];
 
+// Helfer sind seltener als normale Verbesserungen – zuerst soll Opa selbst kämpfen.
+const weightOf = (u) => u.weight ?? (u.helper ? 0.35 : 1);
+
 function weightedPick(pool) {
-  const total = pool.reduce((a, u) => a + (u.weight ?? 1), 0);
+  const total = pool.reduce((a, u) => a + weightOf(u), 0);
   let r = Math.random() * total;
   for (const u of pool) {
-    r -= u.weight ?? 1;
+    r -= weightOf(u);
     if (r <= 0) return u;
   }
   return pool[pool.length - 1];
@@ -213,23 +221,26 @@ function weightedPick(pool) {
 
 export function rollChoices(scene) {
   const lv = scene.upgradeLevels;
-  let pool = UPGRADES.filter((u) => (lv[u.id] || 0) < u.max && (!u.cond || u.cond(scene)));
+  let pool = UPGRADES.filter(
+    (u) => (lv[u.id] || 0) < u.max && scene.level >= (u.minLevel || 1) && (!u.cond || u.cond(scene)),
+  );
   const choices = [];
   while (choices.length < 3 && pool.length) {
     const u = weightedPick(pool);
     pool = pool.filter((p) => p !== u);
+    // Höchstens ein Helfer (Zwerg, Bienen, Igel …) pro Auswahl
+    if (u.helper) pool = pool.filter((p) => !p.helper);
     choices.push({ type: 'upgrade', up: u, level: (lv[u.id] || 0) + 1 });
   }
 
-  // Neue Waffen: seltener als Upgrades, aber spätestens alle paar Level eine.
-  // Bevorzugt werden stärkere Waffen (höherer Tier).
+  // Neue Waffen sind selten und kommen erst nach und nach.
   const avail = Object.values(WEAPONS).filter(
     (w) => w.id !== scene.weapon.id && w.tier >= scene.weapon.tier && scene.level >= w.minLevel,
   );
   const better = avail.filter((w) => w.tier > scene.weapon.tier);
-  const chance = 0.3 + scene.levelsSinceWeaponOffer * 0.15;
+  const chance = 0.1 + scene.levelsSinceWeaponOffer * 0.05;
   if (avail.length && Math.random() < chance) {
-    const from = better.length && Math.random() < 0.8 ? better : avail;
+    const from = better.length && Math.random() < 0.6 ? better : avail;
     const w = from[Math.floor(Math.random() * from.length)];
     const slot = choices.length < 3 ? choices.length : Math.floor(Math.random() * 3);
     choices[slot] = { type: 'weapon', weapon: w };

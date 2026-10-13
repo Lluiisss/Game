@@ -1,95 +1,6 @@
 // Zusätzliche Pixelart: Oma, Schusswaffen, Projektile, Garten-Helfer und Icons.
 import { drawMap } from './pixel.js';
 
-// ---------------------------------------------------------------- Oma
-
-const OMA_PAL = {
-  H: '#dcdce4',
-  h: '#9a9aa8',
-  l: '#ffffff',
-  S: '#f2c49b',
-  s: '#d79f76',
-  E: '#222222',
-  g: '#4a3a7a',
-  r: '#c0606a',
-  W: '#ffffff',
-  D: '#8a4fb0',
-  d: '#6a3590',
-  K: '#c0392b',
-  L: '#e8c2a0',
-  B: '#3a2a1e',
-};
-
-const OMA_DOWN = [
-  '......hHHh......',
-  '.....hHlHHh.....',
-  '....hHHHHHHh....',
-  '...hHHHHHHHHh...',
-  '...hHSSSSSSHh...',
-  '...hSgEggEgSh...',
-  '....SSSSSSSS....',
-  '.....SSrrSS.....',
-  '....DDWWWWDD....',
-  '...DDDDddDDDD...',
-  '..SDDDDddDDDDK..',
-  '..DDDDDDDDDDKK..',
-  '...DDDDDDDDDD...',
-  '....DDDDDDDD....',
-];
-
-const OMA_UP = [
-  '......hHHh......',
-  '.....hHlHHh.....',
-  '....hHHHHHHh....',
-  '...hHHHHHHHHh...',
-  '...hHHHlHHHHh...',
-  '...hHHHHHHHHh...',
-  '....sHHHHHHs....',
-  '.....sSSSSs.....',
-  '....DDDDDDDD....',
-  '...DDDDddDDDD...',
-  '..KDDDDddDDDDS..',
-  '..KKDDDDDDDDDD..',
-  '...DDDDDDDDDD...',
-  '....DDDDDDDD....',
-];
-
-const OMA_SIDE = [
-  '.....hHHh.......',
-  '....hHlHHh......',
-  '...hHHHHHHh.....',
-  '..hHHHHHSSSS....',
-  '..hHHHHSgEgS....',
-  '..hHHHSSSSSSSs..',
-  '...hHSSSSrrS....',
-  '.....sSSSSs.....',
-  '.....DDWWDD.....',
-  '....DDDDDDDD....',
-  '....DDDDSSDD....',
-  '....DDDDKKDD....',
-  '...DDDDDKKDDD...',
-  '....DDDDDDDD....',
-];
-
-const OMA_LEGS_FRONT = [
-  ['.....LL..LL.....', '.....BB..BB.....'],
-  ['......L..LL.....', '......B..BB.....'],
-  ['.....LL..L......', '.....BB..B......'],
-];
-const OMA_LEGS_SIDE = [
-  ['.....LL..LL.....', '.....BBB.BBB....'],
-  ['....LL....LL....', '...BBB....BBB...'],
-  ['......LLLL......', '......BBBBB.....'],
-];
-
-function makeOma(scene) {
-  for (let f = 0; f < 3; f++) {
-    drawMap(scene, `oma_down_${f}`, [...OMA_DOWN, ...OMA_LEGS_FRONT[f]], OMA_PAL);
-    drawMap(scene, `oma_up_${f}`, [...OMA_UP, ...OMA_LEGS_FRONT[f]], OMA_PAL);
-    drawMap(scene, `oma_side_${f}`, [...OMA_SIDE, ...OMA_LEGS_SIDE[f]], OMA_PAL);
-  }
-}
-
 // ---------------------------------------------------------------- Neue Waffen
 
 const W_PAL = {
@@ -117,98 +28,46 @@ function col(n, row) {
 function makeWeapons(scene) {
   drawMap(
     scene,
-    'w_sling',
+    'w_fork',
+    ['T.T.T', 'T.T.T', 'T.T.T', 'T.T.T', 'ttttt', '..w..', ...col(16, '..W..')],
+    W_PAL,
+  );
+  drawMap(
+    scene,
+    'w_scythe',
     [
-      'W.......W',
-      'W.......W',
-      'WR.....RW',
-      '.W.....W.',
-      '.WR...RW.',
-      '..W...W..',
-      '..WwwwW..',
-      '...WWW...',
-      '....W....',
-      '....W....',
-      '...RRR...',
-      '...RrR...',
-      '...RRR...',
-      '....R....',
+      'TTTTTTTTT......',
+      '.tTTTTTTTTT....',
+      '...ttTTTTTTT...',
+      '.......ttTTTw..',
+      '...........W...',
+      ...col(16, '...........W...'),
+      '..........WWW..',
     ],
     W_PAL,
   );
   drawMap(
     scene,
-    'w_pumpkin',
+    'w_chainsaw',
     [
-      '..OOOOOOO..',
-      '.OkkkkkkkO.',
-      '.OkkkkkkkO.',
-      '..KKKKKKK..',
-      ...col(4, '..KKKkKKK..'),
-      '..OOOOOOO..',
-      ...col(4, '..KKKkKKK..'),
-      '.KKKKKKKKK.',
-      '.WWWWWWWWW.',
-      'WWWwWWWwWWW',
-      '.WWWWWWWWW.',
+      '.TtTtT.',
+      'tKKKKKt',
+      'TKkkkKT',
+      'tKkkkKT',
+      'TKkkkKt',
+      'tKkkkKT',
+      'TKkkkKt',
+      'tKKKKKT',
+      '.TtTtT.',
+      'OOOOOOO',
+      'OOoOOOO',
+      'OOOOOOO',
+      'OkOOOOO',
+      '.OOOOO.',
+      '.k...k.',
+      '.kkkkk.',
     ],
     W_PAL,
-  );
-  drawMap(
-    scene,
-    'w_flamer',
-    [
-      '.kYYYk.',
-      '.kOOOk.',
-      '..kkk..',
-      ...col(11, '...t...'),
-      '..RRR..',
-      '.RRRRR.',
-      '.RYRRR.',
-      '.RRRRR.',
-      '.RRRRR.',
-      '.rrrrr.',
-    ],
-    { ...W_PAL, t: '#9a9aa0' },
-  );
-  drawMap(
-    scene,
-    'w_rocket',
-    [
-      '...RRR...',
-      '..RRRRR..',
-      '.GGGGGGG.',
-      '.GgGGGgG.',
-      ...col(3, '.GGGGGGG.'),
-      '.YYYYYYY.',
-      ...col(3, '.GGGGGGG.'),
-      '.GgGGGgG.',
-      '.YYYYYYY.',
-      ...col(3, '.GGGGGGG.'),
-      '.GGkkkGG.',
-      '..K...K..',
-      '..K...K..',
-    ],
-    W_PAL,
-  );
-}
-
-// ---------------------------------------------------------------- Projektile
-
-function makeProjectiles(scene) {
-  drawMap(scene, 'p_chestnut', ['.BB.', 'BbBB', 'BBBB', '.bb.'], { B: '#8a4a1e', b: '#c07a3e' });
-  drawMap(
-    scene,
-    'p_pumpkin',
-    ['...g...', '.OOgOO.', 'OOoOoOO', 'OOoOoOO', 'OOoOoOO', '.OOOOO.'],
-    { O: '#f07d1a', o: '#c45a0c', g: '#3f9c3a' },
-  );
-  // Rakete zeigt nach rechts
-  drawMap(
-    scene,
-    'p_rocket',
-    ['RR.......', 'RWWWWWWRR.', 'RWWYWWWRRR', 'RWWWWWWRR.', 'RR.......'],
-    { R: '#d8352a', W: '#eeeeee', Y: '#3b6fc4' },
   );
 }
 
@@ -276,8 +135,6 @@ const ICON_PAL = {
   S: '#d9b38c',
   E: '#222222',
   N: '#111111',
-  C: '#8a4a1e',
-  c: '#c07a3e',
 };
 
 const ICONS = {
@@ -347,49 +204,17 @@ const ICONS = {
     '.M..........',
     '............',
   ],
-  i_multi: [
-    '............',
-    '..CCC..CCC..',
-    '.CCcCCCCcCC.',
-    '.CCCCCCCCCC.',
-    '.bCCCbbCCCb.',
-    '..bbb..bbb..',
-    '............',
-    '....w..w....',
-    '...www.www..',
-    '....w..w....',
-    '............',
-    '............',
-  ],
-  i_oma: [
-    '....hHHh....',
-    '...hHHHHh...',
-    '..hHSSSShh..',
-    '..hSgEgESh..',
-    '...SSrrSS...',
-    '..DDWWWWDD..',
-    '.DDDDddDDDD.',
-    '.SDDDddDDDK.',
-    '..DDDDDDDKK.',
-    '..DDDDDDDD..',
-    '...L....L...',
-    '...B....B...',
-  ],
 };
 
 function makeIcons(scene) {
-  const pal = { ...ICON_PAL, H: '#dcdce4', h: '#9a9aa8', g: '#4a3a7a', r: '#c0606a', D: '#8a4fb0', d: '#6a3590', K: '#c0392b', W: '#ffffff', L: '#e8c2a0', B: '#3a2a1e' };
   Object.entries(ICONS).forEach(([key, rows]) => {
-    if (key === 'i_oma') drawMap(scene, key, rows, pal);
-    else if (key === 'i_mower') drawMap(scene, key, rows, { ...ICON_PAL, R: '#d8352a', G: '#56e04a', g: '#3f9c3a' });
+    if (key === 'i_mower') drawMap(scene, key, rows, { ...ICON_PAL, R: '#d8352a', G: '#56e04a', g: '#3f9c3a' });
     else drawMap(scene, key, rows, ICON_PAL);
   });
 }
 
 export function makeExtras(scene) {
-  makeOma(scene);
   makeWeapons(scene);
-  makeProjectiles(scene);
   makeHelpers(scene);
   makeIcons(scene);
 }
