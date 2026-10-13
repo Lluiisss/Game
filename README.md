@@ -10,8 +10,7 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
 
 | Taste | Aktion |
 | --- | --- |
-| Pfeiltasten / WASD | laufen |
-| Leertaste (gedrückt halten) | zuhauen |
+| Pfeiltasten / WASD | laufen (Opa haut automatisch in Laufrichtung zu) |
 | P / ESC | Pause (Q im Pausemenü = aufgeben) |
 | M | Ton an/aus |
 | ← → + Leertaste/Enter, 1/2/3 oder Maus | Upgrade beim Level-Up wählen |
@@ -20,31 +19,20 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
 
 - Maulwürfe tauchen mit einem **Hügel** aus dem Boden auf, chillen eine Weile und tauchen
   wieder ab. Den Hügel lassen sie liegen – auch wenn man sie erwischt.
-- Maulwürfe (rote Lebensleiste) **und** Hügel (orange Lebensleiste) haben Leben und
-  müssen mit dem Gartengerät weggehauen werden. Solange ein Maulwurf auf seinem Hügel
-  sitzt, schützt er den Hügel.
-- Die Anzeige **„Rasen verhügelt“** zeigt, wie zerwühlt der Rasen ist. Bei 100 % ist
-  Game Over.
-- Maulwurf-Sorten: normal, **Flitzer** (rotes Stirnband, kurz oben), **Chiller**
-  (Sonnenbrille, lange oben) und **Boss-Maulwürfe** (Bergarbeiterhelm, viel Leben,
-  großer Hügel, der dreifach zählt).
-- Mit der Zeit kommen mehr Maulwürfe mit mehr Leben, und sie bleiben kürzer oben.
-- Erledigte Maulwürfe und Hügel geben **XP**. Bei jedem Level-Up gibt es 3 Upgrades zur
-  Auswahl: Schaden, Laufgeschwindigkeit, Reichweite, Angriffstempo, Schwungbreite,
-  Hügelschaden, Krit-Chance, XP-Bonus, Vogelscheuche, Rasensamen, Gartenzwerg-Wache,
-  Rasensprenger, Schubkarre …
-- Mit jedem Level steigen Schaden, Angriffstempo, Reichweite und Laufgeschwindigkeit
-  automatisch ein wenig.
-- Regelmäßig werden **neue Gartengeräte** angeboten, jedes krasser als das letzte:
-  Spaten, Heckenschere, Vorschlaghammer, Wasserschlauch, Motorsense,
-  Kastanien-Schleuder, Kürbis-Kanone, Unkrautbrenner und zum Schluss der
-  **Raketenwerfer**. Schusswaffen zielen automatisch.
-- Helfer-Items: Gartenzwerg, Rasensprenger, Bienenstock, Igel-Kumpel, Mähroboter,
-  Regenwolke und Gewitter-Wetterhahn.
-- Ab **Level 15** kommt **Oma** dazu, läuft selbstständig herum und haut mit ihrer
-  Handtasche zu. Sie levelt mit.
-- Treibende Chiptune-Musik, die bei Gefahr und Boss-Maulwürfen schneller und
-  intensiver wird.
+- Maulwürfe (rote Lebensleiste) **und** Hügel (orange Lebensleiste) müssen weggehauen
+  werden. Bei 100 % „Rasen verhügelt“ ist Game Over.
+- Maulwurfarten, die nach und nach dazukommen (jede wird beim ersten Auftauchen angekündigt):
+  Flitzer, Chiller, Angsthase (taucht bei Treffern ab), Buddler (buddelt Extra-Hügel),
+  Panzer-Maulwurf (halber Schaden), Doktor-Maulwurf (heilt Nachbarn), Mama-Maulwurf
+  (Babys beim Tod) und Boss-Maulwürfe.
+- XP und Level-Ups: Jedes Level gibt automatisch etwas mehr Werte, dazu 3 Garten-Upgrades
+  zur Auswahl.
+- Neue Nahkampf-Gartengeräte kommen selten und nach und nach: Spaten, Heckenschere,
+  Mistgabel, Vorschlaghammer, Sense, Motorsense, Kettensäge.
+- Helfer (Gartenzwerg, Rasensprenger, Bienen, Igel, Mähroboter, Regenwolke,
+  Gewitter-Wetterhahn) gibt es erst später und seltener – zuerst kämpft Opa selbst.
+- Ab **Level 15** kommt **Oma** (groß angekündigt) durch das Gartentor und hilft mit.
+- Chiptune-Musik, die bei Gefahr und Bossen schneller und intensiver wird.
 - Die **Bestenliste** (Top 10) wird lokal im Browser gespeichert (localStorage).
 
 ## Entwicklung

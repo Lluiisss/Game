@@ -231,6 +231,9 @@ export class Oma {
     this.cd = 0;
     this.target = null;
     this.retarget = 0;
+    // Zuerst durch das Gartentor auf den Rasen laufen
+    this.entering = true;
+    this.enterY = LAWN.y + 50;
     this.shadow = scene.add.image(x, y, 'shadow').setScale(PX * 1.3, PX).setAlpha(0.3).setDepth(-400);
     this.sprite = scene.add.image(x, y, 'oma_down_0').setOrigin(0.5, 1).setScale(PX);
     this.label = scene.add
@@ -238,8 +241,9 @@ export class Oma {
       .setOrigin(0.5, 1);
   }
 
+  // Wächst mit Opas Level, bleibt aber deutlich schwächer als Opa
   get damage() {
-    return 6 + 2.2 * this.scene.level;
+    return 4 + 1.2 * this.scene.level;
   }
 
   get speed() {
@@ -247,6 +251,14 @@ export class Oma {
   }
 
   update(dt) {
+    if (this.entering) {
+      this.y += 90 * dt;
+      this.walkT += dt;
+      this.dir = 'down';
+      if (this.y >= this.enterY) this.entering = false;
+      this.render(true);
+      return true;
+    }
     this.retarget -= dt;
     if (!this.target || !this.scene.targetAlive(this.target) || this.retarget <= 0) {
       this.retarget = 1.2;
@@ -276,13 +288,17 @@ export class Oma {
         this.scene.hit(this.target, this.damage, { small: true, quiet: true, hillFactor: 1.2 });
       }
     }
+    this.render(moving);
+    return true;
+  }
+
+  render(moving) {
     const f = moving ? WALK[Math.floor(this.walkT * 9) % 4] : 0;
     const side = this.dir === 'left' || this.dir === 'right';
     this.sprite.setTexture(side ? `oma_side_${f}` : `oma_${this.dir}_${f}`).setFlipX(this.dir === 'left');
     this.sprite.setPosition(this.x, this.y).setDepth(this.y);
     this.shadow.setPosition(this.x, this.y - 2);
     this.label.setPosition(this.x, this.y - 38).setDepth(this.y + 2);
-    return true;
   }
 
   swing(ang) {

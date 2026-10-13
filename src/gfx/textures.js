@@ -5,99 +5,7 @@
 import { drawMap } from './pixel.js';
 import { makeGarden, mulberry32 } from './garden.js';
 import { makeExtras } from './extras.js';
-
-// ---------------------------------------------------------------- Opa
-
-const OPA_PAL = {
-  H: '#b4b4b4',
-  h: '#7a7a7a',
-  l: '#e0e0e0',
-  S: '#f2c49b',
-  s: '#d79f76',
-  E: '#222222',
-  r: '#b0605a',
-  W: '#f4f4f4',
-  C: '#a8433a',
-  c: '#7d2f28',
-  P: '#5e5348',
-  p: '#463d35',
-  B: '#3a2a1e',
-};
-
-// Opa: kein Bart, graue Locken
-const OPA_DOWN = [
-  '....hlHhlHh.....',
-  '...hlHhlHhlHh...',
-  '..hHlhHlhHlhHh..',
-  '.hlHhSSSSSShHlh.',
-  '.hHlSSSSSSSSlHh.',
-  '.hlHShhSShhSHlh.',
-  '..hHSSESSESSHh..',
-  '...hSSSssSSSh...',
-  '....SSSSSSSS....',
-  '.....sSrrSs.....',
-  '....CCWWWWCC....',
-  '...CCCCccCCCC...',
-  '..SCCCCccCCCCS..',
-  '....PPPPPPPP....',
-  '....PPPppPPP....',
-];
-
-const OPA_UP = [
-  '....hlHhlHh.....',
-  '...hlHhlHhlHh...',
-  '..hHlhHlhHlhHh..',
-  '.hlHhlHhlHhlHlh.',
-  '.hHlHhlHhlHhlHh.',
-  '.hlHhlHhlHhlHlh.',
-  '..hHlhHlhHlhHh..',
-  '...hlHhlHhlHh...',
-  '....sSSSSSSs....',
-  '.....sSSSSs.....',
-  '....CCCCCCCC....',
-  '...CCCCccCCCC...',
-  '..SCCCCccCCCCS..',
-  '....PPPPPPPP....',
-  '....PPPppPPP....',
-];
-
-const OPA_SIDE = [
-  '...hlHhlHh......',
-  '..hlHhlHhlHh....',
-  '.hHlhHlhHlhHh...',
-  '.hlHhlHhlSSSS...',
-  '.hHlhHlhShhSS...',
-  'hlHhlHhSSSSESS..',
-  '.hHlhHlSSSSSSSs.',
-  '..hlHhSSSSSSS...',
-  '...hHlSSSSrr....',
-  '.....sSSSSs.....',
-  '.....CCWWCC.....',
-  '....CCCCCCCC....',
-  '....CCCCSSCC....',
-  '.....PPPPPP.....',
-  '.....PPPPPP.....',
-];
-
-const LEGS_FRONT = [
-  ['....PPP..PPP....', '....BBB..BBB....'],
-  ['.....PP..PPP....', '.....BB..BBB....'],
-  ['....PPP..PP.....', '....BBB..BB.....'],
-];
-
-const LEGS_SIDE = [
-  ['.....PP..PP.....', '.....BBB.BBB....'],
-  ['....PP....PP....', '...BBB....BBB...'],
-  ['......PPPP......', '......BBBBB.....'],
-];
-
-function makeOpa(scene) {
-  for (let f = 0; f < 3; f++) {
-    drawMap(scene, `opa_down_${f}`, [...OPA_DOWN, ...LEGS_FRONT[f]], OPA_PAL);
-    drawMap(scene, `opa_up_${f}`, [...OPA_UP, ...LEGS_FRONT[f]], OPA_PAL);
-    drawMap(scene, `opa_side_${f}`, [...OPA_SIDE, ...LEGS_SIDE[f]], OPA_PAL);
-  }
-}
+import { makePeople } from './people.js';
 
 // ---------------------------------------------------------------- Maulwürfe
 
@@ -119,6 +27,15 @@ const MOLE_BASE = [
 ];
 
 const MOLE_PAL = {
+  T: '#b8bcc4',
+  t: '#6e737c',
+  G: '#3f9c3a',
+  g: '#2b6e28',
+  W: '#ffffff',
+  P: '#ff8cc6',
+  p: '#d0508a',
+  B: '#7fd0ff',
+  k: '#111111',
   F: '#5a4740',
   f: '#3b2e2a',
   L: '#7a625a',
@@ -181,6 +98,53 @@ function makeMoles(scene) {
     replaceRows(boss, { 4: '..FFxFxFFxFxFF..', 5: '.fFFFxFNNFxFFFf.' }),
     MOLE_PAL,
   );
+
+  // Panzer-Maulwurf: Stahlhelm
+  const armor = [
+    '.....TTTTTT.....',
+    '...TTTTTTTTTT...',
+    '..TtTTTTTTTTtT..',
+    '.tttttttttttttt.',
+    '..FFFwEFFEwFFF..',
+    ...MOLE_BASE.slice(4),
+  ];
+  drawMap(scene, 'mole_armor', armor, MOLE_PAL);
+  drawMap(scene, 'mole_armor_dead', replaceRows(armor, { 4: '..FFxFxFFxFxFF..' }), MOLE_PAL);
+
+  // Buddel-Maulwurf: grünes Kopftuch, Erde an den Krallen
+  const digPal = { ...MOLE_PAL, K: '#8a5a2a' };
+  const dig = replaceRows(MOLE_BASE, { 1: '...fGGGGGGGGf...', 2: '..fGGgGGGGgGGf..' });
+  drawMap(scene, 'mole_dig', dig, digPal);
+  drawMap(scene, 'mole_dig_dead', replaceRows(dig, { 3: DEAD_EYES[3], 4: DEAD_EYES[4] }), digPal);
+
+  // Angsthase: heller Pelz, große Augen, Schweißtropfen
+  const scaredPal = { ...MOLE_PAL, F: '#8f7f78', f: '#5e504a', L: '#b0a09a' };
+  const scared = replaceRows(MOLE_BASE, {
+    1: '...fFFFFFFFFf.B.',
+    2: '..fFwwFFFFwwFfBB',
+    3: '..FFwEFFFFwEFF..',
+  });
+  drawMap(scene, 'mole_scared', scared, scaredPal);
+  drawMap(scene, 'mole_scared_dead', replaceRows(MOLE_BASE, DEAD_EYES), scaredPal);
+
+  // Doktor-Maulwurf: Haube mit rotem Kreuz
+  const doc = replaceRows(MOLE_BASE, {
+    0: '......WWWW......',
+    1: '....WWWRRWWW....',
+    2: '..fFWWRRRRWWFf..',
+  });
+  drawMap(scene, 'mole_doc', doc, MOLE_PAL);
+  drawMap(scene, 'mole_doc_dead', replaceRows(doc, { 3: DEAD_EYES[3], 4: DEAD_EYES[4] }), MOLE_PAL);
+
+  // Mama-Maulwurf: rosa Schleife und Wimpern
+  const mama = replaceRows(MOLE_BASE, {
+    0: '...PPp..pPP.....',
+    1: '...PPPpPPPFFf...',
+    2: '..fFPp..pPFFFf..',
+    3: '..FFkwEFFEwkFF..',
+  });
+  drawMap(scene, 'mole_mama', mama, MOLE_PAL);
+  drawMap(scene, 'mole_mama_dead', replaceRows(mama, { 3: DEAD_EYES[3], 4: DEAD_EYES[4] }), MOLE_PAL);
 }
 
 // ---------------------------------------------------------------- Gartenzwerg
@@ -629,7 +593,7 @@ function makeMisc(scene) {
 }
 
 export function generateTextures(scene) {
-  makeOpa(scene);
+  makePeople(scene);
   makeMoles(scene);
   makeGnome(scene);
   makeWeapons(scene);

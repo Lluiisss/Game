@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT, MAX_HILL_LOAD, BEEHIVE, OMA_LEVEL } from '../config.js';
+import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT, MAX_HILL_LOAD, BEEHIVE, GATE, OMA_LEVEL } from '../config.js';
 import * as D from '../difficulty.js';
 import { WEAPONS, TYPE_LABEL } from '../data/weapons.js';
 import { rollChoices } from '../data/upgrades.js';
@@ -8,13 +8,12 @@ import { music } from '../audio/music.js';
 import { formatTime } from '../systems/leaderboard.js';
 import { addButterflies } from '../gfx/ambient.js';
 import { Player } from '../entities/Player.js';
-import { Mole } from '../entities/Mole.js';
+import { Mole, MOLE_KINDS } from '../entities/Mole.js';
 import { Hill } from '../entities/Hill.js';
 import { Gnome, Bee, Hedgehog, Mower, Cloud, Oma } from '../entities/Helpers.js';
 
 const DIRT_TINTS = [0x6c4220, 0x87552a, 0x523117, 0xa16b37];
 const GRASS_TINTS = [0x5fa83d, 0x7cc255, 0x43892a];
-const FIRE_TINTS = [0xffd02a, 0xff8a1a, 0xe8401a, 0xc8200a];
 const MAX_FLOAT_TEXTS = 45;
 
 const dist = Phaser.Math.Distance.Between;
@@ -66,7 +65,8 @@ export class GameScene extends Phaser.Scene {
     this.moles = [];
     this.hills = [];
     this.helpers = [];
-    this.projectiles = [];
+    this.seenKinds = new Set();
+    this.announceQueue = [];
     this.oma = null;
     this.floatCount = 0;
 
@@ -92,7 +92,6 @@ export class GameScene extends Phaser.Scene {
       a: 'A',
       s: 'S',
       d: 'D',
-      space: 'SPACE',
     });
     this.input.keyboard.on('keydown-P', () => this.pauseGame());
     this.input.keyboard.on('keydown-ESC', () => this.pauseGame());
@@ -103,6 +102,10 @@ export class GameScene extends Phaser.Scene {
     const onResume = () => {
       this.input.keyboard.resetKeys();
       music.setPaused(false);
+      if (this.omaArriving) {
+        this.omaArriving = false;
+        this.spawnOma();
+      }
     };
     this.events.on('resume', onResume);
     this.events.once('shutdown', () => {
@@ -164,28 +167,6 @@ export class GameScene extends Phaser.Scene {
         emitting: false,
       })
       .setDepth(8600);
-    this.fireFx = this.add
-      .particles(0, 0, 'px', {
-        lifespan: { min: 220, max: 460 },
-        speed: { min: 10, max: 60 },
-        angle: { min: 230, max: 310 },
-        scale: { start: 4.5, end: 0.8 },
-        alpha: { start: 1, end: 0 },
-        tint: FIRE_TINTS,
-        emitting: false,
-      })
-      .setDepth(8550);
-    this.boomFx = this.add
-      .particles(0, 0, 'px', {
-        lifespan: { min: 300, max: 700 },
-        speed: { min: 80, max: 320 },
-        angle: { min: 0, max: 360 },
-        scale: { start: 4, end: 0.5 },
-        alpha: { start: 1, end: 0 },
-        tint: FIRE_TINTS,
-        emitting: false,
-      })
-      .setDepth(8560);
   }
 
   createHud() {
@@ -194,8 +175,7 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0x4d3420, 1).fillRect(0, 0, GAME_W, 4);
     g.fillStyle(0x24170c, 1).fillRect(0, HUD_H - 4, GAME_W, 4);
     for (let x = 0; x < GAME_W; x += 120) g.fillStyle(0x33210f, 1).fillRect(x, 4, 2, HUD_H - 8);
-    g.fillStyle(0x24170c, 0.85).fillRect(40, GAME_H - 44, GAME_W - 80, 34);
-    g.lineStyle(2, 0x6e4a26, 1).strokeRect(40, GAME_H - 44, GAME_W - 80, 34);
+    g.fillStyle(0x2c1d10, 1).fillRect(0, 58, GAME_W, 2);
 
     const t = (x, y, size, color = '#f3ead2') =>
       this.add.text(x, y, '', { fontFamily: FONT, fontSize: `${size}px`, color }).setDepth(9600);
@@ -208,7 +188,7 @@ export class GameScene extends Phaser.Scene {
     this.hudLoadBar = this.add.graphics().setDepth(9600);
     this.hudLoadText = t(990, 4, 30);
     this.hudLine2 = t(16, 34, 22);
-    this.hudStats = t(GAME_W / 2, GAME_H - 40, 21, '#f3ead2').setOrigin(0.5, 0);
+    this.hudStats = t(16, 60, 21, '#d9c9a6');
   }
 
   // ------------------------------------------------------------------ Werte inkl. Level-Bonus
@@ -249,8 +229,9 @@ export class GameScene extends Phaser.Scene {
     };
     this.player.update(dt, input, { speedMult: this.stats.speedMult * this.bonus.speed });
 
+    // Opa haut automatisch zu – man muss nur laufen und zielen.
     this.attackCd -= dt;
-    if (k.space.isDown && this.attackCd <= 0) {
+    if (this.attackCd <= 0) {
       this.attackCd = this.weapon.cooldown / this.attackRateMult;
       this.performAttack();
     }
@@ -258,13 +239,9 @@ export class GameScene extends Phaser.Scene {
     this.updateSpawning(dt);
 
     const upMult = D.upTimeMult(this.elapsed) * this.stats.upMult;
-    for (const m of this.moles) {
-      m.update(dt, upMult);
-      if (m.burnT > 0 && m.hittable) this.updateBurn(m, dt);
-    }
+    for (const m of this.moles) m.update(dt, upMult);
     this.moles = this.moles.filter((m) => !m.dead);
 
-    this.updateProjectiles(dt);
     this.updateItems(dt);
     this.helpers = this.helpers.filter((h) => h.update(dt));
     if (this.oma) this.oma.update(dt);
@@ -300,10 +277,18 @@ export class GameScene extends Phaser.Scene {
       boss: bossUp,
     });
 
+    // Neue Maulwurfarten nacheinander ankündigen
+    if (this.announceQueue.length && !this.currentBanner) {
+      const m = this.announceQueue.shift();
+      this.banner(`Neu: ${m.def.name}!`, '#ffcf6a', m.def.desc);
+      if (m.hittable) this.pointAt(m);
+    }
+
     this.drawBars();
     this.updateHud(load);
 
     if (this.pendingLevelUps > 0) this.openLevelUp();
+    else if (this.omaPending) this.startOmaIntro();
   }
 
   updateSpawning(dt) {
@@ -313,7 +298,7 @@ export class GameScene extends Phaser.Scene {
       let normalAlive = this.moles.filter((m) => !m.boss).length;
       for (let i = 0; i < D.spawnBatch(this.elapsed) && normalAlive < D.maxMoles(this.elapsed); i++) {
         const kind = D.rollKind(this.elapsed);
-        const hp = Math.round(D.moleHp(this.elapsed) * (kind === 'fast' ? 0.6 : kind === 'chill' ? 1.2 : 1));
+        const hp = Math.round(D.moleHp(this.elapsed) * MOLE_KINDS[kind].hpMult);
         this.moles.push(new Mole(this, kind, hp, Phaser.Math.FloatBetween(0.2, 1.0)));
         normalAlive += 1;
       }
@@ -362,13 +347,73 @@ export class GameScene extends Phaser.Scene {
   }
 
   moleWantsToEmerge(mole) {
-    const pos = this.findSpawnPos(mole.boss);
+    let pos;
+    if (mole.spawnNear) {
+      pos = this.posNear(mole.spawnNear.x, mole.spawnNear.y, 30, 80);
+      mole.spawnNear = null;
+    } else {
+      pos = this.findSpawnPos(mole.boss);
+    }
     const hpBase = D.hillHp(this.elapsed);
-    const hill = new Hill(this, pos.x, pos.y, mole.boss, mole.boss ? hpBase * 4 : hpBase);
+    const small = mole.kind === 'baby';
+    const hill = new Hill(this, pos.x, pos.y, mole.boss, mole.boss ? hpBase * 4 : small ? hpBase * 0.5 : hpBase, small);
     this.hills.push(hill);
     mole.emerge(hill);
     this.dirtFx.explode(mole.boss ? 22 : 10, pos.x, hill.holeY);
     sfx.pop();
+    // Neue Maulwurfart einmal groß ankündigen
+    if (mole.def.desc && !this.seenKinds.has(mole.kind)) {
+      this.seenKinds.add(mole.kind);
+      this.announceQueue.push(mole);
+    }
+  }
+
+  // Zufällige Position im Ring um (x, y), innerhalb des Rasens
+  posNear(x, y, minD, maxD) {
+    const a = Math.random() * Math.PI * 2;
+    const d = Phaser.Math.FloatBetween(minD, maxD);
+    return {
+      x: Phaser.Math.Clamp(x + Math.cos(a) * d, LAWN.x + 24, LAWN.right - 24),
+      y: Phaser.Math.Clamp(y + Math.sin(a) * d, LAWN.y + 40, LAWN.bottom - 8),
+    };
+  }
+
+  // Pfeil über einem neuen Maulwurf
+  pointAt(mole) {
+    const arrow = this.add
+      .text(mole.hitX, mole.hitY - 50, '▼', { fontFamily: FONT, fontSize: '34px', color: '#ffcf6a', stroke: '#1e140d', strokeThickness: 5 })
+      .setOrigin(0.5)
+      .setDepth(9200);
+    this.tweens.add({ targets: arrow, y: arrow.y - 10, duration: 300, yoyo: true, repeat: 4, onComplete: () => arrow.destroy() });
+  }
+
+  // Fähigkeiten: Buddler buddelt, Doktor heilt
+  onMoleAbility(mole) {
+    if (mole.def.dig) {
+      if (this.hills.filter((h) => h.digger === mole).length >= 3) return;
+      const pos = this.posNear(mole.hill.x, mole.hill.y, 45, 75);
+      const hill = new Hill(this, pos.x, pos.y, false, D.hillHp(this.elapsed) * 0.6, true);
+      hill.digger = mole;
+      this.hills.push(hill);
+      this.dirtFx.explode(8, pos.x, hill.hitY);
+      sfx.dive();
+    }
+    if (mole.def.heal) {
+      const r = 150;
+      const ring = this.add.circle(mole.hitX, mole.hitY, 10).setStrokeStyle(3, 0x7cff7c, 0.9).setDepth(8300);
+      this.tweens.add({ targets: ring, radius: r, alpha: 0, duration: 450, onComplete: () => ring.destroy() });
+      for (const m of this.moles) {
+        if (m === mole || !m.hittable || dist(m.hitX, m.hitY, mole.hitX, mole.hitY) > r || m.hp >= m.maxHp) continue;
+        const amt = Math.round(m.maxHp * 0.2);
+        m.hp = Math.min(m.maxHp, m.hp + amt);
+        this.floatText(m.hitX, m.hitY - 20, `+${amt}`, '#7cff7c', 20);
+      }
+      for (const h of this.hills) {
+        if (h.removed || h.hp >= h.maxHp || dist(h.x, h.y, mole.hill.x, mole.hill.y) > r) continue;
+        h.hp = Math.min(h.maxHp, h.hp + h.maxHp * 0.3);
+      }
+      sfx.heal();
+    }
   }
 
   onMoleDive(mole) {
@@ -458,17 +503,23 @@ export class GameScene extends Phaser.Scene {
   damageMole(mole, rawDmg, opts = {}) {
     if (!mole.hittable) return;
     const { dmg, crit } = opts.noCrit ? { dmg: rawDmg, crit: false } : this.rollCrit(rawDmg);
-    const amount = Math.max(1, Math.round(dmg));
+    const armored = !!mole.def.armor;
+    const amount = Math.max(1, Math.round(dmg * (mole.def.armor || 1)));
     mole.hp -= amount;
     this.damageDealt += amount;
     mole.hitFlash();
     if (!opts.quiet) (crit ? sfx.crit : sfx.hit)();
     if (!opts.noText) {
       const size = crit ? 28 : opts.small ? 18 : 22;
-      const color = opts.color || (crit ? '#ffe14a' : '#ffffff');
+      const color = opts.color || (crit ? '#ffe14a' : armored ? '#b8bcc4' : '#ffffff');
       this.floatText(mole.hitX + Phaser.Math.Between(-10, 10), mole.hitY - 18, String(amount), color, size);
     }
     if (mole.hp <= 0) this.killMole(mole);
+    else if (mole.def.flee && mole.flee()) {
+      this.floatText(mole.hitX, mole.hitY - 40, 'Hilfe!', '#7fd0ff', 22);
+      this.dirtFx.explode(6, mole.hitX, mole.baseY);
+      sfx.dive();
+    }
   }
 
   killMole(mole) {
@@ -486,6 +537,14 @@ export class GameScene extends Phaser.Scene {
       sfx.kill();
     }
     this.gainXp(mole.def.xp, x, y - 20);
+    if (mole.def.babies && mole.hill) {
+      for (let i = 0; i < mole.def.babies; i++) {
+        const baby = new Mole(this, 'baby', Math.max(5, Math.round(mole.maxHp * MOLE_KINDS.baby.hpMult)), 0.3 + i * 0.25);
+        baby.spawnNear = { x: mole.hill.x, y: mole.hill.y };
+        this.moles.push(baby);
+      }
+      this.floatText(x, y - 46, 'Babys!', '#ff8cc6', 26);
+    }
   }
 
   damageHill(hill, rawDmg, opts = {}) {
@@ -502,7 +561,7 @@ export class GameScene extends Phaser.Scene {
       }
       this.dirtFx.explode(3, hill.hitX, hill.hitY);
       if (!opts.quiet) sfx.hillHit();
-      if (!this.tweens.isTweening(hill.img)) this.tweens.add({ targets: hill.img, scaleY: PX * 0.8, duration: 60, yoyo: true });
+      if (!this.tweens.isTweening(hill.img)) this.tweens.add({ targets: hill.img, scaleY: hill.img.scaleX * 0.8, duration: 60, yoyo: true });
     }
     hill.hp -= amount;
     if (hill.hp <= 0) this.removeHill(hill);
@@ -522,32 +581,6 @@ export class GameScene extends Phaser.Scene {
     this.gainXp(hill.boss ? 4 : 1, x, y - 30);
   }
 
-  updateBurn(m, dt) {
-    m.burnT -= dt;
-    m.burnAcc += m.burnDps * dt;
-    if (Math.random() < 0.5) this.fireFx.emitParticleAt(m.hitX + Phaser.Math.Between(-10, 10), m.hitY + Phaser.Math.Between(-8, 8));
-    if (m.burnAcc >= 1 && (m.burnAcc >= 8 || m.burnT <= 0)) {
-      const amt = Math.floor(m.burnAcc);
-      m.burnAcc -= amt;
-      this.damageMole(m, amt, { quiet: true, noCrit: true, small: true, color: '#ff9a5a' });
-    }
-    if (m.burnT <= 0 && !m.dead) m.sprite.clearTint();
-  }
-
-  explode(x, y, radius, dmg) {
-    sfx.explosion();
-    this.cameras.main.shake(140, 0.005);
-    const flash = this.add.circle(x, y, radius, 0xffb02a, 0.45).setDepth(8540);
-    this.tweens.add({ targets: flash, alpha: 0, scale: 1.15, duration: 260, onComplete: () => flash.destroy() });
-    const ring = this.add.circle(x, y, 8).setStrokeStyle(5, 0xfff2c0, 1).setDepth(8541);
-    this.tweens.add({ targets: ring, radius, alpha: 0, duration: 300, onComplete: () => ring.destroy() });
-    this.boomFx.explode(Math.min(40, 12 + radius / 4), x, y);
-    this.dirtFx.explode(10, x, y);
-    for (const t of this.targetsNear(x, y, radius)) {
-      this.hit(t, dmg, { quiet: true, hillFactor: this.weapon.hillMult });
-    }
-  }
-
   // ------------------------------------------------------------------ Angriffe
 
   performAttack() {
@@ -559,11 +592,6 @@ export class GameScene extends Phaser.Scene {
     const ang = p.facing;
     const range = this.attackRange;
     const dmg = this.attackDamage;
-
-    if (w.type === 'shot') {
-      this.fireProjectiles();
-      return;
-    }
 
     const targets = this.collectTargets();
     const hits = [];
@@ -591,123 +619,9 @@ export class GameScene extends Phaser.Scene {
         if (dist(ix, iy, t.x, t.y) - t.r <= aoe) hits.push(t);
       }
       this.slamFx(ang, ix, iy, aoe);
-    } else if (w.type === 'stream') {
-      const cos = Math.cos(ang);
-      const sin = Math.sin(ang);
-      for (const t of targets) {
-        const vx = t.x - ox;
-        const vy = t.y - oy;
-        const proj = vx * cos + vy * sin;
-        const perp = Math.abs(-vx * sin + vy * cos);
-        if (proj >= -t.r && proj <= range + t.r && perp <= w.width / 2 + t.r) hits.push(t);
-      }
-      this.streamFx(ang, range);
-      sfx.spray();
-    } else if (w.type === 'cone') {
-      const arc = Phaser.Math.DegToRad(Math.min(120, w.arc + st.arcBonus * 0.5));
-      for (const t of targets) {
-        const d = dist(ox, oy, t.x, t.y);
-        if (d - t.r > range) continue;
-        const diff = Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(t.y - oy, t.x - ox) - ang));
-        if (diff <= arc / 2 + Math.atan2(t.r, Math.max(d, 1)) || d < t.r + 12) hits.push(t);
-      }
-      this.flameFx(ang, arc, range);
-      sfx.flame();
     }
 
-    for (const t of hits) {
-      const quiet = w.type === 'cone' || w.type === 'stream';
-      this.hit(t, dmg, { hillFactor: w.hillMult, quiet, small: quiet });
-      if (w.type === 'cone' && t.kind === 'mole' && !t.obj.dead) {
-        t.obj.burnT = 2;
-        t.obj.burnDps = w.burn * this.stats.dmgMult * this.bonus.dmg;
-      }
-    }
-  }
-
-  fireProjectiles() {
-    const w = this.weapon;
-    const p = this.player;
-    const range = this.attackRange;
-    // Automatisch auf den nächsten Maulwurf zielen (sonst Hügel, sonst Blickrichtung)
-    const target = this.nearestTarget(p.cx, p.cy, range, { molePriority: 200 });
-    const aim = target ? Math.atan2(target.y - p.cy, target.x - p.cx) : p.facing;
-    const n = 1 + this.stats.multi;
-    for (let i = 0; i < n; i++) {
-      const a = aim + (i - (n - 1) / 2) * 0.2;
-      const sx = p.cx + Math.cos(a) * 18;
-      const sy = p.cy + Math.sin(a) * 18;
-      const scale = w.proj === 'p_rocket' ? PX * 1.2 : PX * 1.3;
-      const sprite = this.add.image(sx, sy, w.proj).setScale(scale).setDepth(8450).setRotation(a);
-      this.projectiles.push({
-        sprite,
-        x: sx,
-        y: sy,
-        a,
-        speed: w.speed,
-        dmg: this.attackDamage,
-        pierce: w.pierce,
-        explode: w.explode ? w.explode * Math.sqrt(this.rangeMult) : 0,
-        homing: !!w.homing,
-        target: i === Math.floor(n / 2) ? target : null,
-        travelled: 0,
-        range: range * 1.2,
-        hitSet: new Set(),
-        smoke: 0,
-      });
-    }
-    this.aimTool(aim);
-    if (w.homing) sfx.rocket();
-    else sfx.shoot();
-  }
-
-  updateProjectiles(dt) {
-    const targets = this.collectTargets();
-    this.projectiles = this.projectiles.filter((pr) => {
-      if (pr.homing) {
-        if (!pr.target || !this.targetAlive(pr.target)) pr.target = this.nearestTarget(pr.x, pr.y, 400, { molePriority: 200 });
-        if (pr.target) {
-          const want = Math.atan2(pr.target.obj.hitY - pr.y, pr.target.obj.hitX - pr.x);
-          const diff = Phaser.Math.Angle.Wrap(want - pr.a);
-          pr.a += Phaser.Math.Clamp(diff, -6 * dt, 6 * dt);
-        }
-        pr.smoke -= dt;
-        if (pr.smoke <= 0) {
-          pr.smoke = 0.03;
-          this.fireFx.emitParticleAt(pr.x - Math.cos(pr.a) * 12, pr.y - Math.sin(pr.a) * 12);
-        }
-      }
-      const step = pr.speed * dt;
-      pr.x += Math.cos(pr.a) * step;
-      pr.y += Math.sin(pr.a) * step;
-      pr.travelled += step;
-      pr.sprite.setPosition(pr.x, pr.y);
-      pr.sprite.setRotation(pr.homing ? pr.a : pr.sprite.rotation + dt * 12);
-
-      for (const t of targets) {
-        if (pr.hitSet.has(t.obj) || !this.targetAlive(t)) continue;
-        if (dist(pr.x, pr.y, t.x, t.y) > t.r + 6) continue;
-        if (pr.explode) {
-          this.explode(pr.x, pr.y, pr.explode, pr.dmg);
-          pr.sprite.destroy();
-          return false;
-        }
-        pr.hitSet.add(t.obj);
-        this.hit(t, pr.dmg, { hillFactor: this.weapon.hillMult });
-        pr.pierce -= 1;
-        if (pr.pierce < 0) {
-          pr.sprite.destroy();
-          return false;
-        }
-      }
-      const out = pr.x < LAWN.x - 20 || pr.x > LAWN.right + 20 || pr.y < LAWN.y - 30 || pr.y > LAWN.bottom + 20;
-      if (out || pr.travelled > pr.range) {
-        if (pr.explode && !out) this.explode(pr.x, pr.y, pr.explode, pr.dmg);
-        pr.sprite.destroy();
-        return false;
-      }
-      return true;
-    });
+    for (const t of hits) this.hit(t, dmg, { hillFactor: w.hillMult });
   }
 
   // ------------------------------------------------------------------ Items & Helfer
@@ -805,13 +719,29 @@ export class GameScene extends Phaser.Scene {
     if (moles.length) sfx.zap();
   }
 
+  // Große Ankündigung, danach kommt Oma durch das Gartentor herein.
+  startOmaIntro() {
+    this.omaPending = false;
+    this.omaArriving = true;
+    this.scene.pause();
+    this.scene.launch('OmaIntro');
+  }
+
   spawnOma() {
-    const p = this.player;
-    this.oma = new Oma(this, Phaser.Math.Clamp(p.x + 60, LAWN.x + 20, LAWN.right - 20), p.y);
-    sfx.oma();
-    this.banner('Oma kommt zu Hilfe!', '#e8c7ff');
-    const heart = this.add.image(this.oma.x, this.oma.y - 50, 'i_oma').setScale(PX * 2).setDepth(9200);
-    this.tweens.add({ targets: heart, y: heart.y - 30, alpha: 0, duration: 1400, onComplete: () => heart.destroy() });
+    this.oma = new Oma(this, GATE.x, GATE.y);
+    this.banner('Oma ist da!', '#ff8a8a', 'Sie haut ab jetzt mit ihrer Handtasche mit.');
+    this.time.addEvent({
+      delay: 250,
+      repeat: 8,
+      callback: () => {
+        if (!this.oma) return;
+        const heart = this.add
+          .text(this.oma.x + Phaser.Math.Between(-12, 12), this.oma.y - 40, '♥', { fontFamily: FONT, fontSize: '26px', color: '#ff5a7a', stroke: '#1e140d', strokeThickness: 4 })
+          .setOrigin(0.5)
+          .setDepth(9200);
+        this.tweens.add({ targets: heart, y: heart.y - 34, alpha: 0, duration: 900, onComplete: () => heart.destroy() });
+      },
+    });
   }
 
   // ------------------------------------------------------------------ Effekte
@@ -835,17 +765,6 @@ export class GameScene extends Phaser.Scene {
     });
     if (this.swingReset) this.swingReset.remove();
     this.swingReset = this.time.delayedCall(duration + 80, () => {
-      p.swinging = false;
-    });
-  }
-
-  aimTool(ang) {
-    const p = this.player;
-    p.swinging = true;
-    p.tool.setPosition(p.cx, p.cy + 4).setRotation(ang + Math.PI / 2).setScale(PX);
-    p.tool.setDepth(Math.sin(ang) < -0.3 ? p.y - 1 : p.y + 1);
-    if (this.swingReset) this.swingReset.remove();
-    this.swingReset = this.time.delayedCall(220, () => {
       p.swinging = false;
     });
   }
@@ -889,47 +808,6 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  streamFx(ang, range) {
-    const p = this.player;
-    this.aimTool(ang);
-    const sx = p.cx + Math.cos(ang) * 22;
-    const sy = p.cy + Math.sin(ang) * 22;
-    for (let i = 0; i < 5; i++) {
-      const d = Phaser.Math.Between(0, range - 20);
-      const drop = this.add.image(sx, sy, 'drop').setScale(PX).setDepth(8300);
-      this.tweens.add({
-        targets: drop,
-        x: sx + Math.cos(ang) * (d + 20) + Phaser.Math.Between(-4, 4),
-        y: sy + Math.sin(ang) * (d + 20) + Phaser.Math.Between(-4, 4),
-        alpha: 0.2,
-        duration: 140 + d * 0.4,
-        onComplete: () => drop.destroy(),
-      });
-    }
-    const ex = p.cx + Math.cos(ang) * range;
-    const ey = p.cy + Math.sin(ang) * range;
-    const g = this.add.graphics().setDepth(8250);
-    g.lineStyle(8, 0x8fd3ff, 0.45).lineBetween(sx, sy, ex, ey);
-    g.lineStyle(3, 0xffffff, 0.6).lineBetween(sx, sy, ex, ey);
-    this.tweens.add({ targets: g, alpha: 0, duration: 110, onComplete: () => g.destroy() });
-    this.waterFx.explode(2, ex, ey);
-  }
-
-  flameFx(ang, arc, range) {
-    const p = this.player;
-    this.aimTool(ang);
-    for (let i = 0; i < 14; i++) {
-      const a = ang + Phaser.Math.FloatBetween(-arc / 2, arc / 2);
-      const d = Phaser.Math.FloatBetween(20, range);
-      this.fireFx.emitParticleAt(p.cx + Math.cos(a) * d, p.cy + Math.sin(a) * d);
-    }
-    const g = this.add.graphics().setDepth(8540);
-    g.fillStyle(0xff7a1a, 0.18);
-    g.slice(p.cx, p.cy, range, ang - arc / 2, ang + arc / 2, false);
-    g.fillPath();
-    this.tweens.add({ targets: g, alpha: 0, duration: 90, onComplete: () => g.destroy() });
-  }
-
   floatText(x, y, msg, color = '#ffffff', size = 22, force = false) {
     if (!force && this.floatCount >= MAX_FLOAT_TEXTS) return;
     this.floatCount += 1;
@@ -956,8 +834,23 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  banner(msg, color) {
+  banner(msg, color, sub = null) {
     if (this.currentBanner) this.currentBanner.destroy();
+    if (this.currentSub) this.currentSub.destroy();
+    if (sub) {
+      const st = this.add
+        .text(GAME_W / 2, LAWN.y + 108, sub, {
+          fontFamily: FONT,
+          fontSize: '28px',
+          color: '#ffffff',
+          stroke: '#1e140d',
+          strokeThickness: 6,
+        })
+        .setOrigin(0.5)
+        .setDepth(9400);
+      this.currentSub = st;
+      this.tweens.add({ targets: st, alpha: 0, delay: 2600, duration: 500, onComplete: () => st.destroy() });
+    }
     const t = this.add
       .text(GAME_W / 2, LAWN.y + 70, msg, {
         fontFamily: TITLE_FONT,
@@ -975,7 +868,7 @@ export class GameScene extends Phaser.Scene {
       targets: t,
       alpha: 0,
       y: t.y - 20,
-      delay: 1500,
+      delay: sub ? 2600 : 1500,
       duration: 500,
       onComplete: () => {
         if (this.currentBanner === t) this.currentBanner = null;
@@ -1038,20 +931,18 @@ export class GameScene extends Phaser.Scene {
       hillsRemoved: this.hillsRemoved,
       time: this.elapsed,
     });
-    const omaInfo = this.oma ? `   Oma Lv ${this.level}` : this.level < OMA_LEVEL ? `   Oma ab Lv ${OMA_LEVEL}` : '';
     this.hudLine2.setText(
       `Maulwürfe: ${this.kills}${this.bossKills ? ` (Boss ${this.bossKills})` : ''}   ` +
         `Hügel weg: ${this.hillsRemoved}   ` +
         `Auf dem Rasen: ${activeMoles} Maulw. / ${this.hills.length} Hügel   ` +
         `Boss in ${Math.ceil(this.bossTimer)}s   ` +
-        `Punkte: ${score}${omaInfo}`,
+        `Punkte: ${score}`,
     );
 
     const w = this.weapon;
     const aps = (this.attackRateMult / w.cooldown).toFixed(1);
-    const shots = w.type === 'shot' && this.stats.multi ? ` x${1 + this.stats.multi}` : '';
     this.hudStats.setText(
-      `${w.name} (${TYPE_LABEL[w.type]})  |  Schaden ${Math.round(this.attackDamage)}${shots}  |  ` +
+      `${w.name} (${TYPE_LABEL[w.type]})  |  Schaden ${Math.round(this.attackDamage)}  |  ` +
         `${aps} Angriffe/s  |  Reichweite ${Math.round(this.attackRange)}  |  ` +
         `Tempo ${Math.round(this.stats.speedMult * this.bonus.speed * 100)}%  |  Krit ${Math.round(this.stats.crit * 100)}%`,
     );
@@ -1068,7 +959,7 @@ export class GameScene extends Phaser.Scene {
       this.level += 1;
       this.xpNeed = D.xpForLevel(this.level);
       this.pendingLevelUps += 1;
-      if (this.level >= OMA_LEVEL && !this.oma) this.spawnOma();
+      if (this.level >= OMA_LEVEL && !this.oma) this.omaPending = true;
     }
   }
 

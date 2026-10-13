@@ -43,7 +43,7 @@ function valueNoise(seed, cell) {
 }
 
 // Native Größe: halbe Bildschirmauflösung (unterhalb der HUD-Leiste).
-export const GARDEN_NATIVE = { w: 544, h: 384, lawnX: 64, lawnY: 56, lawnW: 416, lawnH: 272 };
+export const GARDEN_NATIVE = { w: 544, h: 372, lawnX: 64, lawnY: 50, lawnW: 416, lawnH: 272 };
 
 export function makeGarden(scene) {
   const { w: W, h: H, lawnX, lawnY, lawnW, lawnH } = GARDEN_NATIVE;
@@ -86,7 +86,17 @@ export function makeGarden(scene) {
         continue;
       }
       const { dIn, dx, dy } = distIn(x, y);
-      if (dIn <= 3) {
+      if (y >= ly1 + 4) {
+        // Terrasse aus Holzdielen unten
+        const ty = y - (ly1 + 4);
+        const row = Math.floor(ty / 5);
+        let col = row % 2 ? '#b8875a' : '#ad7d52';
+        if (ty % 5 === 4) col = '#6e4a2e';
+        else if ((x + row * 37) % 64 === 0) col = '#7a5434';
+        else if (rng() < 0.06) col = '#a07048';
+        if (ty < 2) col = '#5a3a22';
+        put(x, y, col);
+      } else if (dIn <= 3) {
         const along = dx >= dy ? y : x;
         let col = along % 7 === 0 ? '#6e6e66' : dIn === 1 ? '#c4c4ba' : '#a3a39a';
         if (dIn === 3) col = '#7d7d74';
@@ -109,12 +119,11 @@ export function makeGarden(scene) {
     }
   }
 
-  // --- Weg vom Gartentor (unten Mitte) zum Rasen
+  // --- Trittsteine vom Gartentor (oben Mitte) zum Rasen
   const gateX = Math.floor(W / 2);
-  for (let y = ly1 + 4; y < H; y += 7) {
-    const ox = ((y / 7) | 0) % 2 === 0 ? -3 : 3;
-    blob(put, rng, gateX + ox - 7, y, 6, 3, ['#b5b0a2', '#a39e90', '#c9c4b6']);
-    blob(put, rng, gateX + ox + 7, y + 2, 6, 3, ['#b5b0a2', '#a39e90', '#c9c4b6']);
+  for (let y = 14; y < lawnY - 3; y += 8) {
+    const ox = ((y / 8) | 0) % 2 === 0 ? -4 : 4;
+    blob(put, rng, gateX + ox, y, 6, 3, ['#b5b0a2', '#a39e90', '#c9c4b6']);
   }
 
   ctx.putImageData(img, 0, 0);
@@ -124,8 +133,8 @@ export function makeGarden(scene) {
   for (let y = 0; y < H; y += 2) {
     for (let x = 0; x < W; x += 2) {
       const { dIn } = distIn(x, y);
-      if (dIn < 5 || dIn > 9 || rng() > 0.22) continue;
-      if (Math.abs(x - gateX) < 16 && y > ly1) continue;
+      if (dIn < 5 || dIn > 9 || rng() > 0.22 || y >= ly1) continue;
+      if (Math.abs(x - gateX) < 12 && y < lawnY) continue;
       flower(ctx, x + (rng() < 0.5 ? 1 : 0), y, flowerCols[Math.floor(rng() * flowerCols.length)]);
     }
   }
@@ -133,7 +142,7 @@ export function makeGarden(scene) {
   for (let i = 0; i < 140; i++) {
     const x = Math.floor(rng() * W);
     const y = Math.floor(rng() * H);
-    if (distIn(x, y).dIn < 13) continue;
+    if (distIn(x, y).dIn < 13 || y >= ly1) continue;
     ctx.fillStyle = rng() < 0.5 ? '#ffffff' : rng() < 0.5 ? '#f7d038' : '#c79bff';
     ctx.fillRect(x, y, 1, 1);
   }
@@ -157,34 +166,35 @@ export function makeGarden(scene) {
     for (let k = 0; k < 6; k++) ctx.fillRect(x + Math.floor(rng() * 5) - 2, y + Math.floor(rng() * 3) - 1, 2, 1);
   }
 
-  // --- Deko (von hinten nach vorne)
-  drawShed(ctx, 8, 6);
-  drawVeggies(ctx, rng, 92, 337, 120, 30);
-  drawPond(ctx, rng, 400, 356, 44, 15);
-  drawBirdBath(ctx, 30, 150);
-  drawCompost(ctx, 504, 66);
-  drawBench(ctx, 497, 250);
-  drawBarrel(ctx, 30, 236);
-  drawBeehive(ctx, 514, 160);
+  // --- Deko links & rechts
+  drawCompost(ctx, 512, 70);
+  drawBeehive(ctx, 514, 165);
+  drawPond(ctx, rng, 512, 245, 22, 30);
+  drawBirdBath(ctx, 30, 112);
+  drawVeggies(ctx, rng, 10, 140, 42, 56);
+  drawBarrel(ctx, 30, 228);
 
-  // Zaun außen herum (mit Tor unten)
-  drawFence(ctx, W, H, gateX);
+  // --- Terrasse: Tisch mit Sonnenschirm, Grill, Liege, Blumentöpfe
+  const ty0 = ly1 + 4;
+  drawGrill(ctx, 44, ty0 + 22);
+  drawTable(ctx, 150, ty0 + 24);
+  drawLounger(ctx, 400, ty0 + 14);
+  [96, 222, 322, 470, 520].forEach((x, i) => drawPot(ctx, rng, x, ty0 + 12 + (i % 2) * 14));
+
+  // Zaun links, rechts und oben (mit Gartentor in der Mitte)
+  drawFence(ctx, W, ty0, gateX);
 
   // Bäume und Büsche zuletzt, sie ragen über den Zaun
   const trees = [
+    [36, 26, 17, 'oak'],
     [120, 22, 17, 'apple'],
-    [330, 20, 18, 'oak'],
-    [450, 24, 16, 'cherry'],
-    [28, 95, 15, 'oak'],
-    [30, 300, 17, 'apple'],
-    [516, 112, 14, 'cherry'],
-    [512, 316, 18, 'oak'],
-    [516, 210, 12, 'bush'],
-    [28, 190, 11, 'bush'],
-    [190, 30, 11, 'bush'],
-    [262 - 40, 362, 12, 'bush'],
-    [262 + 64, 364, 11, 'bush'],
-    [40, 360, 14, 'cherry'],
+    [200, 26, 11, 'bush'],
+    [345, 26, 11, 'bush'],
+    [430, 22, 17, 'cherry'],
+    [512, 26, 16, 'oak'],
+    [28, 280, 15, 'apple'],
+    [516, 120, 13, 'cherry'],
+    [516, 300, 13, 'bush'],
   ];
   trees.forEach(([x, y, r, type], i) => drawTree(ctx, mulberry32(100 + i), x, y, r, type));
 
@@ -276,59 +286,93 @@ function drawTree(ctx, rng, cx, cy, r, type) {
   }
 }
 
-function drawFence(ctx, W, H, gateX) {
+function drawFence(ctx, W, bottom, gateX) {
   const wood = '#efe4c8';
   const shade = '#c9b994';
   const dark = '#6e5a3a';
-  // oben & unten: Latten von vorne
-  const row = (y0, skipGate) => {
-    rect(ctx, 0, y0 + 3, W, 1, dark);
-    rect(ctx, 0, y0 + 7, W, 1, dark);
-    rect(ctx, 0, y0 + 2, W, 1, shade);
-    rect(ctx, 0, y0 + 6, W, 1, shade);
-    for (let x = 1; x < W - 1; x += 4) {
-      if (skipGate && Math.abs(x + 1 - gateX) < 12) continue;
-      rect(ctx, x, y0, 3, 10, wood);
-      rect(ctx, x + 2, y0 + 1, 1, 9, shade);
-      rect(ctx, x + 1, y0 - 1, 1, 1, wood);
-      rect(ctx, x - 1, y0, 1, 10, dark);
-      rect(ctx, x, y0 + 10, 3, 1, dark);
-    }
-  };
-  row(1, false);
-  row(H - 12, true);
-  // Tor (offen)
-  rect(ctx, gateX - 13, H - 15, 3, 14, '#8a6a3a');
-  rect(ctx, gateX + 10, H - 15, 3, 14, '#8a6a3a');
-  // links & rechts: Zaun von oben gesehen
+  // oben: Latten von vorne, Lücke für das Tor
+  const y0 = 1;
+  for (const [x0, x1] of [
+    [0, gateX - 12],
+    [gateX + 12, W],
+  ]) {
+    rect(ctx, x0, y0 + 3, x1 - x0, 1, dark);
+    rect(ctx, x0, y0 + 7, x1 - x0, 1, dark);
+    rect(ctx, x0, y0 + 2, x1 - x0, 1, shade);
+    rect(ctx, x0, y0 + 6, x1 - x0, 1, shade);
+  }
+  for (let x = 1; x < W - 1; x += 4) {
+    if (Math.abs(x + 1 - gateX) < 13) continue;
+    rect(ctx, x, y0, 3, 10, wood);
+    rect(ctx, x + 2, y0 + 1, 1, 9, shade);
+    rect(ctx, x + 1, y0 - 1, 1, 1, wood);
+    rect(ctx, x - 1, y0, 1, 10, dark);
+    rect(ctx, x, y0 + 10, 3, 1, dark);
+  }
+  // Gartentor (offen) mit Pfosten
+  rect(ctx, gateX - 14, 0, 4, 13, '#8a6a3a');
+  rect(ctx, gateX + 10, 0, 4, 13, '#8a6a3a');
+  rect(ctx, gateX - 13, 0, 2, 12, '#a8844a');
+  rect(ctx, gateX + 11, 0, 2, 12, '#a8844a');
+  for (let i = 0; i < 4; i++) rect(ctx, gateX - 22 + i * 2, 2 + i * 3, 2, 3, wood);
+  // links & rechts: Zaun von oben gesehen, bis zur Terrasse
   for (const x0 of [2, W - 5]) {
-    rect(ctx, x0, 0, 3, H, shade);
-    rect(ctx, x0 + 1, 0, 1, H, wood);
-    for (let y = 6; y < H; y += 12) {
+    rect(ctx, x0, 0, 3, bottom, shade);
+    rect(ctx, x0 + 1, 0, 1, bottom, wood);
+    for (let y = 6; y < bottom - 4; y += 12) {
       rect(ctx, x0 - 1, y, 5, 5, dark);
       rect(ctx, x0, y + 1, 3, 3, wood);
     }
   }
 }
 
-function drawShed(ctx, x, y) {
-  // Gartenhaus oben links: Dach + Vorderwand
-  rect(ctx, x + 2, y + 34, 46, 4, 'rgba(0,0,0,0.25)');
-  rect(ctx, x, y + 18, 44, 18, '#8a5a32');
-  for (let i = 0; i < 44; i += 4) rect(ctx, x + i, y + 18, 1, 18, '#6e4524');
-  rect(ctx, x + 16, y + 22, 11, 14, '#5a3a1e');
-  rect(ctx, x + 25, y + 29, 1, 1, '#f2c230');
-  rect(ctx, x + 4, y + 22, 8, 7, '#9fd8ff');
-  rect(ctx, x + 7, y + 22, 1, 7, '#6e4524');
-  rect(ctx, x + 4, y + 25, 8, 1, '#6e4524');
-  rect(ctx, x + 32, y + 22, 8, 7, '#9fd8ff');
-  rect(ctx, x + 35, y + 22, 1, 7, '#6e4524');
-  rect(ctx, x + 32, y + 25, 8, 1, '#6e4524');
-  // Dach
-  rect(ctx, x - 3, y, 50, 19, '#a8433a');
-  for (let i = 0; i < 19; i += 3) rect(ctx, x - 3, y + i, 50, 1, '#7d2f28');
-  rect(ctx, x - 3, y + 9, 50, 2, '#5e2420');
-  rect(ctx, x - 3, y + 18, 50, 2, '#4a1a16');
+function drawGrill(ctx, x, y) {
+  rect(ctx, x - 8, y + 6, 18, 3, 'rgba(0,0,0,0.25)');
+  rect(ctx, x - 7, y - 7, 14, 14, '#222222');
+  rect(ctx, x - 6, y - 6, 12, 12, '#3a3a3a');
+  for (let i = -5; i < 6; i += 2) rect(ctx, x - 6, y + i, 12, 1, '#777777');
+  rect(ctx, x - 3, y - 3, 2, 2, '#e8502a');
+  rect(ctx, x + 2, y + 1, 2, 2, '#ff8a1a');
+  rect(ctx, x + 7, y - 1, 6, 2, '#5a3a22');
+}
+
+function drawTable(ctx, x, y) {
+  const chair = (cx, cy) => {
+    rect(ctx, cx - 4, cy - 4, 9, 9, '#e8e8e8');
+    rect(ctx, cx - 4, cy - 4, 9, 2, '#bdbdbd');
+  };
+  chair(x - 22, y);
+  chair(x + 22, y);
+  // Schatten & Tisch
+  rect(ctx, x - 12, y + 10, 26, 4, 'rgba(0,0,0,0.2)');
+  for (let dy = -11; dy <= 11; dy++) {
+    const w = Math.round(Math.sqrt(121 - dy * dy));
+    rect(ctx, x - w, y + dy, w * 2, 1, '#f4f4f4');
+  }
+  // Sonnenschirm (rot-weiß gestreift)
+  for (let dy = -19; dy <= 19; dy++) {
+    for (let dx = -19; dx <= 19; dx++) {
+      if (dx * dx + dy * dy > 361) continue;
+      const a = Math.atan2(dy, dx);
+      const seg = Math.floor(((a + Math.PI) / (Math.PI * 2)) * 8);
+      rect(ctx, x + dx, y - 14 + dy, 1, 1, seg % 2 ? '#d8352a' : '#f4f4f4');
+    }
+  }
+  rect(ctx, x - 1, y - 15, 3, 3, '#7a5434');
+}
+
+function drawLounger(ctx, x, y) {
+  rect(ctx, x - 2, y + 14, 46, 3, 'rgba(0,0,0,0.2)');
+  rect(ctx, x, y, 42, 14, '#7a5434');
+  rect(ctx, x + 2, y + 2, 38, 10, '#3b8fd0');
+  for (let i = 4; i < 40; i += 6) rect(ctx, x + i, y + 2, 2, 10, '#f4f4f4');
+  rect(ctx, x + 30, y + 3, 8, 8, '#ffffff');
+}
+
+function drawPot(ctx, rng, x, y) {
+  rect(ctx, x - 5, y, 10, 8, '#c4622d');
+  rect(ctx, x - 6, y - 1, 12, 2, '#a84e22');
+  fillEllipse(ctx, rng, x, y - 4, 7, 5, (dx, dy, d, r) => (r < 0.15 ? '#ff5a7a' : d < 0.4 ? '#56b04a' : '#3f8a2a'));
 }
 
 function drawPond(ctx, rng, cx, cy, rx, ry) {
@@ -392,15 +436,6 @@ function drawCompost(ctx, x, y) {
   rect(ctx, x - 6, y - 7, 3, 2, '#f07d1a');
   rect(ctx, x + 2, y - 6, 3, 2, '#d8352a');
   rect(ctx, x - 1, y - 8, 2, 2, '#56b04a');
-}
-
-function drawBench(ctx, x, y) {
-  rect(ctx, x, y + 14, 34, 3, 'rgba(0,0,0,0.25)');
-  rect(ctx, x, y, 30, 4, '#8a5a32');
-  rect(ctx, x, y + 5, 30, 4, '#9a6a3a');
-  rect(ctx, x, y + 10, 30, 4, '#8a5a32');
-  rect(ctx, x + 2, y + 14, 2, 3, '#3a2a1e');
-  rect(ctx, x + 26, y + 14, 2, 3, '#3a2a1e');
 }
 
 function drawBarrel(ctx, x, y) {

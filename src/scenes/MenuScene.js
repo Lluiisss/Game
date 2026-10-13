@@ -54,12 +54,12 @@ export class MenuScene extends Phaser.Scene {
     this.tweens.add({ targets: opa, angle: 4, duration: 400, yoyo: true, repeat: -1 });
     const oma = this.add.image(GAME_W / 2 - 130, 318, 'oma_side_0').setScale(PX * 2.2).setOrigin(0.5, 1).setDepth(10);
     this.tweens.add({ targets: oma, y: 312, duration: 300, yoyo: true, repeat: -1 });
-    this.add.image(GAME_W / 2 + 170, 318, 'w_rocket').setScale(PX * 2).setOrigin(0.5, 1).setRotation(-0.5).setDepth(10);
+    this.add.image(GAME_W / 2 + 170, 318, 'w_scythe').setScale(PX * 2).setOrigin(0.5, 1).setRotation(-0.5).setDepth(10);
 
     this.panel(124, 340, 400, 410, 'SO GEHT\'S');
     const help = [
       'Pfeiltasten / WASD  laufen',
-      'Leertaste  zuhauen',
+      'Opa haut automatisch zu!',
       'P / ESC  Pause    M  Ton',
       '',
       'Maulwürfe tauchen mit einem',
@@ -68,10 +68,10 @@ export class MenuScene extends Phaser.Scene {
       'Hügel weg! Ist der Rasen zu',
       'verhügelt: Game Over.',
       '',
-      'Level-Up = Upgrades, Helfer und',
-      'krassere Waffen bis zum',
-      'Raketenwerfer. Ab Level 15',
-      'hilft Oma mit. Achtung, Bosse!',
+      'Level-Up = Upgrades, später',
+      'neue Gartengeräte und Helfer.',
+      'Ab Level 15 hilft Oma mit.',
+      'Achtung, Bosse!',
     ];
     this.add
       .text(144, 380, help.join('\n'), { fontFamily: FONT, fontSize: '25px', color: '#f3ead2', lineSpacing: 1 })
