@@ -1,0 +1,20 @@
+{
+  "name": "maulwurf-alarm",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Opa gegen die Maulwürfe – ein Pixelart-Browserspiel mit Phaser 3",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/press-start-2p": "^5.3.0",
+    "@fontsource/vt323": "^5.3.0",
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}
