@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT } from '../config.js';
 import { loadScores, formatTime } from '../systems/leaderboard.js';
 import { sfx, toggleMute, isMuted } from '../audio/sfx.js';
+import { music } from '../audio/music.js';
+import { addButterflies } from '../gfx/ambient.js';
 
 const row = (rank, name, score, time) =>
   `${rank} ${String(name).padEnd(12, ' ').slice(0, 12)} ${String(score).padStart(7, ' ')}  ${String(time).padStart(5, ' ')}`;
@@ -18,10 +20,11 @@ export class MenuScene extends Phaser.Scene {
     // Dekorative Maulwürfe, die im Hintergrund auftauchen
     this.decoTimer = this.time.addEvent({ delay: 900, loop: true, callback: () => this.decoMole() });
 
-    this.add.rectangle(0, 0, GAME_W, GAME_H, 0x0d0804, 0.35).setOrigin(0);
+    addButterflies(this, 6);
+    this.add.rectangle(0, 0, GAME_W, GAME_H, 0x0d0804, 0.35).setOrigin(0).setDepth(5);
 
     const title = this.add
-      .text(GAME_W / 2, 92, 'MAULWURF-ALARM!', {
+      .text(GAME_W / 2, 112, 'MAULWURF-ALARM!', {
         fontFamily: TITLE_FONT,
         fontSize: '44px',
         color: '#ffe14a',
@@ -30,9 +33,9 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(10);
-    this.tweens.add({ targets: title, y: 98, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.tweens.add({ targets: title, y: 118, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     this.add
-      .text(GAME_W / 2, 146, 'Opa verteidigt seinen Rasen', {
+      .text(GAME_W / 2, 168, 'Opa verteidigt seinen Rasen', {
         fontFamily: FONT,
         fontSize: '34px',
         color: '#f3ead2',
@@ -43,14 +46,17 @@ export class MenuScene extends Phaser.Scene {
       .setDepth(10);
 
     // Opa + Rechen
-    const opa = this.add.image(GAME_W / 2 - 40, 288, 'opa_down_0').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
-    this.add.image(GAME_W / 2 - 10, 274, 'w_rake').setScale(PX * 2.5).setOrigin(0.5, 1).setRotation(0.35).setDepth(9);
-    this.add.image(GAME_W / 2 + 70, 290, 'hill_0').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
-    const mole = this.add.image(GAME_W / 2 + 70, 254, 'mole').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
+    const opa = this.add.image(GAME_W / 2 - 40, 318, 'opa_down_0').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
+    this.add.image(GAME_W / 2 - 10, 304, 'w_rake').setScale(PX * 2.5).setOrigin(0.5, 1).setRotation(0.35).setDepth(9);
+    this.add.image(GAME_W / 2 + 70, 320, 'hill_0').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
+    const mole = this.add.image(GAME_W / 2 + 70, 284, 'mole').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
     this.tweens.add({ targets: mole, scaleY: PX * 2.3, duration: 500, yoyo: true, repeat: -1 });
     this.tweens.add({ targets: opa, angle: 4, duration: 400, yoyo: true, repeat: -1 });
+    const oma = this.add.image(GAME_W / 2 - 130, 318, 'oma_side_0').setScale(PX * 2.2).setOrigin(0.5, 1).setDepth(10);
+    this.tweens.add({ targets: oma, y: 312, duration: 300, yoyo: true, repeat: -1 });
+    this.add.image(GAME_W / 2 + 170, 318, 'w_rocket').setScale(PX * 2).setOrigin(0.5, 1).setRotation(-0.5).setDepth(10);
 
-    this.panel(60, 300, 400, 366, 'SO GEHT\'S');
+    this.panel(124, 340, 400, 410, 'SO GEHT\'S');
     const help = [
       'Pfeiltasten / WASD  laufen',
       'Leertaste  zuhauen',
@@ -62,18 +68,20 @@ export class MenuScene extends Phaser.Scene {
       'Hügel weg! Ist der Rasen zu',
       'verhügelt: Game Over.',
       '',
-      'Level-Up = Gartengeräte &',
-      'Upgrades. Achtung, Bosse!',
+      'Level-Up = Upgrades, Helfer und',
+      'krassere Waffen bis zum',
+      'Raketenwerfer. Ab Level 15',
+      'hilft Oma mit. Achtung, Bosse!',
     ];
     this.add
-      .text(80, 342, help.join('\n'), { fontFamily: FONT, fontSize: '25px', color: '#f3ead2', lineSpacing: 1 })
+      .text(144, 380, help.join('\n'), { fontFamily: FONT, fontSize: '25px', color: '#f3ead2', lineSpacing: 1 })
       .setDepth(10);
 
-    this.panel(500, 300, 400, 366, 'BESTENLISTE');
+    this.panel(564, 340, 400, 410, 'BESTENLISTE');
     const scores = loadScores();
     if (!scores.length) {
       this.add
-        .text(700, 440, 'Noch keine Einträge.\nSei der Erste!', {
+        .text(764, 520, 'Noch keine Einträge.\nSei der Erste!', {
           fontFamily: FONT,
           fontSize: '28px',
           color: '#c9b99a',
@@ -83,12 +91,12 @@ export class MenuScene extends Phaser.Scene {
         .setDepth(10);
     } else {
       this.add
-        .text(520, 340, row(' #', 'Name', 'Punkte', 'Zeit'), { fontFamily: FONT, fontSize: '25px', color: '#9fe870' })
+        .text(584, 384, row(' #', 'Name', 'Punkte', 'Zeit'), { fontFamily: FONT, fontSize: '25px', color: '#9fe870' })
         .setDepth(10);
       scores.slice(0, 10).forEach((s, i) => {
         const line = row(String(i + 1).padStart(2, ' '), s.name, s.score, formatTime(s.time));
         this.add
-          .text(520, 366 + i * 28, line, {
+          .text(584, 414 + i * 30, line, {
             fontFamily: FONT,
             fontSize: '25px',
             color: i === 0 ? '#ffe14a' : '#f3ead2',
@@ -98,7 +106,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     const start = this.add
-      .text(GAME_W / 2, 702, 'LEERTASTE / ENTER zum Starten', {
+      .text(GAME_W / 2, 792, 'LEERTASTE / ENTER zum Starten', {
         fontFamily: TITLE_FONT,
         fontSize: '18px',
         color: '#ffffff',
@@ -122,6 +130,9 @@ export class MenuScene extends Phaser.Scene {
         color: '#8a7a5a',
       })
       .setDepth(10);
+
+    music.play('menu');
+    this.events.once('shutdown', () => music.stop());
 
     const go = (e) => {
       if (e && e.repeat) return;

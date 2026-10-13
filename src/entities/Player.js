@@ -46,6 +46,8 @@ export class Player {
     } else {
       this.walkT = 0;
     }
+    this.x = Math.min(LAWN.right - 14, Math.max(LAWN.x + 14, this.x));
+    this.y = Math.min(LAWN.bottom - 4, Math.max(LAWN.y + 26, this.y));
     this.render();
   }
 

@@ -2,69 +2,20 @@
 // Kleine Sprites werden aus "Pixel-Karten" (Strings) gezeichnet, Rasen,
 // Hecke und Hügel prozedural mit etwas Rauschen.
 
-const OUTLINE = '#1e140d';
-
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function rng() {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function hexToRgb(hex) {
-  const n = parseInt(hex.slice(1), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-// Zeichnet eine Pixel-Karte in eine Canvas-Textur, optional mit automatischer Outline.
-function drawMap(scene, key, rows, pal, outline = OUTLINE) {
-  const h = rows.length;
-  const w = Math.max(...rows.map((r) => r.length));
-  const pad = outline ? 1 : 0;
-  const W = w + pad * 2;
-  const H = h + pad * 2;
-  const tex = scene.textures.createCanvas(key, W, H);
-  const ctx = tex.getContext();
-  const filled = new Uint8Array(W * H);
-  rows.forEach((row, y) => {
-    for (let x = 0; x < row.length; x++) {
-      const col = pal[row[x]];
-      if (!col) continue;
-      ctx.fillStyle = col;
-      ctx.fillRect(x + pad, y + pad, 1, 1);
-      filled[(y + pad) * W + x + pad] = 1;
-    }
-  });
-  if (outline) {
-    ctx.fillStyle = outline;
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        if (filled[y * W + x]) continue;
-        const n =
-          (x > 0 && filled[y * W + x - 1]) ||
-          (x < W - 1 && filled[y * W + x + 1]) ||
-          (y > 0 && filled[(y - 1) * W + x]) ||
-          (y < H - 1 && filled[(y + 1) * W + x]);
-        if (n) ctx.fillRect(x, y, 1, 1);
-      }
-    }
-  }
-  tex.refresh();
-}
+import { drawMap } from './pixel.js';
+import { makeGarden, mulberry32 } from './garden.js';
+import { makeExtras } from './extras.js';
 
 // ---------------------------------------------------------------- Opa
 
 const OPA_PAL = {
-  H: '#e2e2e2',
-  h: '#9e9e9e',
+  H: '#b4b4b4',
+  h: '#7a7a7a',
+  l: '#e0e0e0',
   S: '#f2c49b',
   s: '#d79f76',
   E: '#222222',
-  M: '#f7f7f7',
+  r: '#b0605a',
   W: '#f4f4f4',
   C: '#a8433a',
   c: '#7d2f28',
@@ -73,16 +24,18 @@ const OPA_PAL = {
   B: '#3a2a1e',
 };
 
+// Opa: kein Bart, graue Locken
 const OPA_DOWN = [
-  '.....hHhHhh.....',
-  '...hHHhHHhHHh...',
-  '..hHHHHhHHHHHh..',
-  '..HhHSSSSSShHh..',
-  '..hHShhSShhSHh..',
+  '....hlHhlHh.....',
+  '...hlHhlHhlHh...',
+  '..hHlhHlhHlhHh..',
+  '.hlHhSSSSSShHlh.',
+  '.hHlSSSSSSSSlHh.',
+  '.hlHShhSShhSHlh.',
   '..hHSSESSESSHh..',
   '...hSSSssSSSh...',
-  '....SMMMMMMS....',
-  '.....sSSSSs.....',
+  '....SSSSSSSS....',
+  '.....sSrrSs.....',
   '....CCWWWWCC....',
   '...CCCCccCCCC...',
   '..SCCCCccCCCCS..',
@@ -91,13 +44,14 @@ const OPA_DOWN = [
 ];
 
 const OPA_UP = [
-  '.....hHhHhh.....',
-  '...hHHhHHhHHh...',
-  '..hHHHHhHHHHHh..',
-  '..HhHHhHHHhHHh..',
-  '..hHHhHHhHHhHH..',
-  '..hHHHHhHHHHHh..',
-  '...hHhHHhHhHh...',
+  '....hlHhlHh.....',
+  '...hlHhlHhlHh...',
+  '..hHlhHlhHlhHh..',
+  '.hlHhlHhlHhlHlh.',
+  '.hHlHhlHhlHhlHh.',
+  '.hlHhlHhlHhlHlh.',
+  '..hHlhHlhHlhHh..',
+  '...hlHhlHhlHh...',
   '....sSSSSSSs....',
   '.....sSSSSs.....',
   '....CCCCCCCC....',
@@ -108,15 +62,16 @@ const OPA_UP = [
 ];
 
 const OPA_SIDE = [
-  '....hHhHhh......',
-  '..hHHhHHhHh.....',
-  '.hHHHHhHHHHh....',
-  '.HhHHhHHhSSS....',
-  '.hHHhHHShhSSS...',
-  '.hHhHHSSSSESS...',
-  '..hHHSSSSSSSSs..',
-  '...hHSSSSMMMM...',
-  '.....sSSSSSs....',
+  '...hlHhlHh......',
+  '..hlHhlHhlHh....',
+  '.hHlhHlhHlhHh...',
+  '.hlHhlHhlSSSS...',
+  '.hHlhHlhShhSS...',
+  'hlHhlHhSSSSESS..',
+  '.hHlhHlSSSSSSSs.',
+  '..hlHhSSSSSSS...',
+  '...hHlSSSSrr....',
+  '.....sSSSSs.....',
   '.....CCWWCC.....',
   '....CCCCCCCC....',
   '....CCCCSSCC....',
@@ -635,144 +590,6 @@ function makeHill(scene, key, w, h, seed) {
 
 // ---------------------------------------------------------------- Garten-Hintergrund
 
-function valueNoise(seed, cell) {
-  const rng = mulberry32(seed);
-  const cache = new Map();
-  const at = (ix, iy) => {
-    const k = ix * 7919 + iy * 104729;
-    if (!cache.has(k)) cache.set(k, rng());
-    return cache.get(k);
-  };
-  return (x, y) => {
-    const fx = x / cell;
-    const fy = y / cell;
-    const ix = Math.floor(fx);
-    const iy = Math.floor(fy);
-    const tx = fx - ix;
-    const ty = fy - iy;
-    const sx = tx * tx * (3 - 2 * tx);
-    const sy = ty * ty * (3 - 2 * ty);
-    const a = at(ix, iy);
-    const b = at(ix + 1, iy);
-    const c = at(ix, iy + 1);
-    const d = at(ix + 1, iy + 1);
-    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
-  };
-}
-
-// Native Größe: halbe Bildschirmauflösung, Rasen beginnt bei (32, 32).
-export const GARDEN_NATIVE = { w: 480, h: 336, lawnX: 32, lawnY: 32, lawnW: 416, lawnH: 272 };
-
-function makeGarden(scene) {
-  const { w: W, h: H, lawnX, lawnY, lawnW, lawnH } = GARDEN_NATIVE;
-  const tex = scene.textures.createCanvas('garden', W, H);
-  const ctx = tex.getContext();
-  const img = ctx.createImageData(W, H);
-  const rng = mulberry32(4711);
-  const hedgeNoise = valueNoise(17, 4);
-  const hedgeNoise2 = valueNoise(99, 2);
-  const soilNoise = valueNoise(5, 3);
-  const lx1 = lawnX + lawnW;
-  const ly1 = lawnY + lawnH;
-
-  const put = (x, y, hex) => {
-    const [r, g, b] = hexToRgb(hex);
-    const i = (y * W + x) * 4;
-    img.data[i] = r;
-    img.data[i + 1] = g;
-    img.data[i + 2] = b;
-    img.data[i + 3] = 255;
-  };
-
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const inLawn = x >= lawnX && x < lx1 && y >= lawnY && y < ly1;
-      if (inLawn) {
-        // gemähte Streifen
-        const stripe = Math.floor((x - lawnX) / 32) % 2 === 0;
-        const r = rng();
-        let col;
-        if (stripe) col = r < 0.08 ? '#4c9a30' : r > 0.94 ? '#7cc255' : r > 0.6 ? '#66b043' : '#5fa83d';
-        else col = r < 0.08 ? '#43892a' : r > 0.94 ? '#6db547' : r > 0.6 ? '#5aa138' : '#549b34';
-        // leichter Schatten an der oberen/linken Kante
-        if (y - lawnY < 3 || x - lawnX < 2) col = stripe ? '#4a8f2e' : '#43862a';
-        put(x, y, col);
-        continue;
-      }
-      const dOut = Math.min(x, y, W - 1 - x, H - 1 - y);
-      const dx = x < lawnX ? lawnX - x : x >= lx1 ? x - lx1 + 1 : 0;
-      const dy = y < lawnY ? lawnY - y : y >= ly1 ? y - ly1 + 1 : 0;
-      const dIn = Math.max(dx, dy);
-      if (dIn <= 3) {
-        // Steinkante
-        const along = dx >= dy ? y : x;
-        let col = (along % 7 === 0) ? '#6e6e66' : dIn === 1 ? '#c4c4ba' : '#a3a39a';
-        if (dIn === 3) col = '#7d7d74';
-        if (rng() < 0.07) col = '#8f8f86';
-        put(x, y, col);
-      } else if (dOut < 15) {
-        // Hecke
-        const n = hedgeNoise(x, y) * 0.7 + hedgeNoise2(x, y) * 0.3;
-        let col = n < 0.35 ? '#204a25' : n < 0.55 ? '#2b5f2f' : n < 0.72 ? '#377337' : '#478a42';
-        if (rng() < 0.04) col = '#5ea052';
-        if (dOut === 0) col = '#163319';
-        put(x, y, col);
-      } else {
-        // Blumenbeet (Erde)
-        const n = soilNoise(x, y);
-        let col = n < 0.4 ? '#5c3f27' : n < 0.7 ? '#6b4a2e' : '#7a5636';
-        if (rng() < 0.05) col = '#4a3220';
-        put(x, y, col);
-      }
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-
-  // Blumen im Beet
-  const flowerCols = ['#e84a5f', '#f7d038', '#a66cff', '#ffffff', '#ff8cc6', '#ff7b29'];
-  const inBed = (x, y) => {
-    const dOut = Math.min(x, y, W - 1 - x, H - 1 - y);
-    const dx = x < lawnX ? lawnX - x : x >= lx1 ? x - lx1 + 1 : 0;
-    const dy = y < lawnY ? lawnY - y : y >= ly1 ? y - ly1 + 1 : 0;
-    return dOut >= 16 && Math.max(dx, dy) >= 6;
-  };
-  for (let i = 0; i < 260; i++) {
-    const x = Math.floor(rng() * W);
-    const y = Math.floor(rng() * H);
-    if (!inBed(x, y)) continue;
-    const c = flowerCols[Math.floor(rng() * flowerCols.length)];
-    ctx.fillStyle = '#2f7a2c';
-    ctx.fillRect(x, y + 1, 1, 2);
-    ctx.fillStyle = c;
-    ctx.fillRect(x - 1, y, 1, 1);
-    ctx.fillRect(x + 1, y, 1, 1);
-    ctx.fillRect(x, y - 1, 1, 1);
-    ctx.fillStyle = c === '#f7d038' ? '#c0581a' : '#ffe066';
-    ctx.fillRect(x, y, 1, 1);
-  }
-
-  // Gänseblümchen im Rasen
-  for (let i = 0; i < 45; i++) {
-    const x = lawnX + 4 + Math.floor(rng() * (lawnW - 8));
-    const y = lawnY + 5 + Math.floor(rng() * (lawnH - 9));
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(x - 1, y, 1, 1);
-    ctx.fillRect(x + 1, y, 1, 1);
-    ctx.fillRect(x, y - 1, 1, 1);
-    ctx.fillRect(x, y + 1, 1, 1);
-    ctx.fillStyle = '#f7d038';
-    ctx.fillRect(x, y, 1, 1);
-  }
-  // Klee-Flecken
-  for (let i = 0; i < 18; i++) {
-    const x = lawnX + 4 + Math.floor(rng() * (lawnW - 8));
-    const y = lawnY + 4 + Math.floor(rng() * (lawnH - 8));
-    ctx.fillStyle = '#3f8a2a';
-    for (let k = 0; k < 6; k++) ctx.fillRect(x + Math.floor(rng() * 5) - 2, y + Math.floor(rng() * 3) - 1, 2, 1);
-  }
-  tex.refresh();
-}
-
 // ---------------------------------------------------------------- Kleinkram
 
 function makeMisc(scene) {
@@ -823,4 +640,5 @@ export function generateTextures(scene) {
   makeHill(scene, 'hill_boss', 30, 17, 44);
   makeGarden(scene);
   makeMisc(scene);
+  makeExtras(scene);
 }

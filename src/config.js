@@ -1,16 +1,16 @@
 // Grundlegende Maße – alles in Bildschirmpixeln.
-export const GAME_W = 960;
-export const GAME_H = 736;
+export const GAME_W = 1088;
+export const GAME_H = 832;
 
 // Pixelart wird nativ klein gezeichnet und mit diesem Faktor hochskaliert.
 export const PX = 2;
 
 export const HUD_H = 64;
 
-// Der Rasen (Spielfeld). Drumherum liegt der Garten (Hecke, Beete).
+// Der Rasen (Spielfeld). Drumherum liegt der Garten mit Zaun, Bäumen und Beeten.
 export const LAWN = {
-  x: 64,
-  y: HUD_H + 64,
+  x: 128,
+  y: HUD_H + 112,
   w: 832,
   h: 544,
 };
@@ -24,3 +24,9 @@ export const TITLE_FONT = '"Press Start 2P", monospace';
 export const MAX_HILL_LOAD = 45;
 
 export const PLAYER_SPEED = 140;
+
+// Position des Bienenstocks im Garten (Bildschirmkoordinaten)
+export const BEEHIVE = { x: 1028, y: HUD_H + 320 };
+
+// Ab diesem Level kommt Oma zu Hilfe
+export const OMA_LEVEL = 15;

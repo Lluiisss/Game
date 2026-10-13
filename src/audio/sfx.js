@@ -9,7 +9,7 @@ try {
   /* ignorieren */
 }
 
-function ac() {
+export function ac() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
@@ -62,6 +62,16 @@ function noise({ dur = 0.1, vol = 0.12, delay = 0, freq = 1200, q = 1, type = 'b
   src.connect(f).connect(g).connect(master);
   src.start(t0);
   src.stop(t0 + dur + 0.02);
+}
+
+export function masterNode() {
+  ac();
+  return master;
+}
+
+const muteListeners = [];
+export function onMuteChange(fn) {
+  muteListeners.push(fn);
 }
 
 let lastSwing = 0;
@@ -134,6 +144,33 @@ export const sfx = {
     tone({ freq: 880, dur: 0.08, type: 'square', vol: 0.06 });
     tone({ freq: 660, dur: 0.08, type: 'square', vol: 0.06, delay: 0.1 });
   },
+  shoot() {
+    tone({ freq: 300, freqEnd: 120, dur: 0.07, type: 'square', vol: 0.07 });
+  },
+  rocket() {
+    noise({ dur: 0.25, vol: 0.1, freq: 700, q: 0.6 });
+    tone({ freq: 180, freqEnd: 60, dur: 0.2, type: 'sawtooth', vol: 0.06 });
+  },
+  explosion() {
+    noise({ dur: 0.45, vol: 0.22, freq: 180, q: 0.5, type: 'lowpass' });
+    tone({ freq: 90, freqEnd: 30, dur: 0.35, type: 'sine', vol: 0.25 });
+  },
+  flame() {
+    const now = performance.now();
+    if (now - lastSwing < 110) return;
+    lastSwing = now;
+    noise({ dur: 0.14, vol: 0.06, freq: 600, q: 0.4, type: 'lowpass' });
+  },
+  zap() {
+    noise({ dur: 0.3, vol: 0.18, freq: 2500, q: 0.3, type: 'highpass' });
+    tone({ freq: 1200, freqEnd: 80, dur: 0.25, type: 'sawtooth', vol: 0.1 });
+  },
+  buzz() {
+    tone({ freq: 220, freqEnd: 260, dur: 0.08, type: 'sawtooth', vol: 0.03 });
+  },
+  oma() {
+    [523, 784, 659, 1046].forEach((f, i) => tone({ freq: f, dur: 0.14, type: 'triangle', vol: 0.12, delay: i * 0.1 }));
+  },
   gameOver() {
     [392, 330, 262, 196].forEach((f, i) => tone({ freq: f, dur: 0.3, type: 'square', vol: 0.12, delay: i * 0.25 }));
   },
@@ -150,5 +187,6 @@ export function toggleMute() {
   } catch {
     /* ignorieren */
   }
+  muteListeners.forEach((fn) => fn(muted));
   return muted;
 }
