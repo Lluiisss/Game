@@ -36,7 +36,7 @@ export class OmaIntroScene extends Phaser.Scene {
       .setScale(0.2);
     this.tweens.add({ targets: title, scale: 1, duration: 500, ease: 'Back.Out' });
 
-    const oma = this.add.image(GAME_W + 120, GAME_H / 2 + 60, 'oma_side_0').setOrigin(0.5, 1).setScale(7).setFlipX(true);
+    const oma = this.add.image(GAME_W + 120, GAME_H / 2 + 60, 'oma_side_0').setOrigin(0.5, 1).setScale(9).setFlipX(true);
     let f = 0;
     const walk = this.time.addEvent({
       delay: 110,
@@ -56,7 +56,7 @@ export class OmaIntroScene extends Phaser.Scene {
         oma.setTexture('oma_down_0').setFlipX(false);
         const pan = this.add.image(oma.x + 70, oma.y - 60, 'w_pan').setOrigin(0.5, 1).setScale(8).setRotation(0.5);
         this.tweens.add({ targets: pan, rotation: -0.3, duration: 260, yoyo: true, repeat: -1 });
-        this.tweens.add({ targets: oma, scaleY: 7.5, duration: 260, yoyo: true, repeat: -1 });
+        this.tweens.add({ targets: oma, scaleY: 9.6, duration: 260, yoyo: true, repeat: -1 });
       },
     });
 
