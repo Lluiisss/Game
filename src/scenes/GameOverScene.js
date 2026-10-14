@@ -1,14 +1,11 @@
 import Phaser from 'phaser';
 import { GAME_W, GAME_H, PX, HUD_H, FONT, TITLE_FONT } from '../config.js';
-import { loadScores, qualifies, addScore, lastName, saveName, formatTime } from '../systems/leaderboard.js';
+import { loadScores, addScore, lastName, saveName, formatTime } from '../systems/leaderboard.js';
+import { fetchOnlineScores, qualifiesOnline, submitOnlineScore, ONLINE_MAX } from '../systems/firebase.js';
+import { LeaderboardView } from '../ui/LeaderboardView.js';
 import { sfx } from '../audio/sfx.js';
 
 const NAME_MAX = 12;
-
-const row = (rank, name, score, kills, hills, time, level) =>
-  `${rank}  ${String(name).padEnd(12, ' ').slice(0, 12)} ${String(score).padStart(7, ' ')}  ` +
-  `${String(kills).padStart(6, ' ')}  ${String(hills).padStart(5, ' ')}  ${String(time).padStart(6, ' ')}  ` +
-  `${String(level).padStart(2, ' ')}`;
 
 export class GameOverScene extends Phaser.Scene {
   constructor() {
@@ -17,9 +14,18 @@ export class GameOverScene extends Phaser.Scene {
 
   init(data) {
     this.result = data;
-    this.mode = qualifies(data.score) ? 'name' : 'board';
+    // Mit Punkten trägt man sich mit seinem Namen ein
+    this.mode = data.score > 0 ? 'name' : 'board';
     this.name = lastName();
     this.myIndex = -1;
+    this.myId = null;
+    this.boardSource = 'online';
+    this.boardMsg = '';
+    this.online = undefined;
+    // Online-Liste schon mal im Hintergrund laden
+    this.onlinePromise = fetchOnlineScores()
+      .then((list) => (this.online = list))
+      .catch(() => (this.online = null));
   }
 
   create() {
@@ -72,13 +78,16 @@ export class GameOverScene extends Phaser.Scene {
     else this.showBoard();
 
     this.input.keyboard.on('keydown', (e) => this.onKey(e));
+    this.onlinePromise.then(() => {
+      if (this.scene.isActive() && this.mode === 'board' && this.boardSource === 'online') this.showBoard();
+    });
   }
 
   showNameEntry() {
     this.lower.removeAll(true);
     this.lower.add(
       this.add
-        .text(GAME_W / 2, 460, 'Neuer Eintrag in der Bestenliste! Wie heißt du?', {
+        .text(GAME_W / 2, 460, 'Trag dich in die Bestenliste ein! Wie heißt du?', {
           fontFamily: FONT,
           fontSize: '30px',
           color: '#9fe870',
@@ -123,46 +132,64 @@ export class GameOverScene extends Phaser.Scene {
     this.mode = 'board';
     this.boardReadyAt = this.time.now + 400;
     this.lower.removeAll(true);
-    const scores = loadScores();
+    if (this.board) this.board.destroy();
+    const online = this.boardSource === 'online';
     this.lower.add(
       this.add
-        .text(GAME_W / 2, 435, 'BESTENLISTE', { fontFamily: TITLE_FONT, fontSize: '16px', color: '#9fe870' })
+        .text(GAME_W / 2, 425, online ? `ONLINE-BESTENLISTE (TOP ${ONLINE_MAX})` : 'BESTENLISTE (DIESES GERÄT)', {
+          fontFamily: TITLE_FONT,
+          fontSize: '16px',
+          color: '#9fe870',
+        })
         .setOrigin(0.5),
     );
-    this.lower.add(
-      this.add.text(GAME_W / 2 - 290, 460, row(' #', 'Name', 'Punkte', 'Maulw.', 'Hügel', 'Zeit', 'Lv'), {
-        fontFamily: FONT,
-        fontSize: '23px',
-        color: '#c9b99a',
-      }),
-    );
-    scores.forEach((s, i) => {
-      const line = row(String(i + 1).padStart(2, ' '), s.name, s.score, s.kills, s.hills, formatTime(s.time), s.level);
-      const mine = i === this.myIndex;
-      this.lower.add(
-        this.add.text(GAME_W / 2 - 290, 486 + i * 25, line, {
-          fontFamily: FONT,
-          fontSize: '23px',
-          color: mine ? '#ffe14a' : '#f3ead2',
-        }),
-      );
+    this.board = new LeaderboardView(this, GAME_W / 2 - 310, 446, {
+      rows: 10,
+      rowH: 26,
+      fontSize: 23,
+      format: 'full',
+      width: 610,
     });
-    if (!scores.length) {
+    if (online) {
+      if (this.online === undefined) this.board.setStatus('Lade Online-Bestenliste …');
+      else if (this.online === null) this.board.setStatus('Online-Bestenliste nicht erreichbar.\nT: lokale Liste anzeigen');
+      else if (!this.online.length) this.board.setStatus('Noch keine Einträge. Sei der Erste!');
+      else this.board.setEntries(this.online, this.online.findIndex((e) => e.id === this.myId));
+    } else {
+      const local = loadScores();
+      if (!local.length) this.board.setStatus('Noch keine Einträge.');
+      else this.board.setEntries(local, this.myIndex);
+    }
+    if (this.boardMsg) {
       this.lower.add(
         this.add
-          .text(GAME_W / 2, 540, 'Noch keine Einträge.', { fontFamily: FONT, fontSize: '26px', color: '#c9b99a' })
+          .text(GAME_W / 2, 744, this.boardMsg, { fontFamily: FONT, fontSize: '24px', color: '#ffcf6a' })
           .setOrigin(0.5),
       );
     }
     const hint = this.add
-      .text(GAME_W / 2, 792, 'ENTER / LEERTASTE: Nochmal spielen   ·   ESC: Hauptmenü', {
+      .text(GAME_W / 2, 792, 'ENTER: Nochmal  ·  ESC: Menü  ·  T: Online/Gerät  ·  ↑↓ / Mausrad: blättern', {
         fontFamily: FONT,
-        fontSize: '28px',
+        fontSize: '26px',
         color: '#ffffff',
       })
       .setOrigin(0.5);
     this.tweens.add({ targets: hint, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
     this.lower.add(hint);
+  }
+
+  showSaving() {
+    this.mode = 'saving';
+    this.lower.removeAll(true);
+    this.lower.add(
+      this.add
+        .text(GAME_W / 2, 540, 'Speichere in der Online-Bestenliste …', {
+          fontFamily: FONT,
+          fontSize: '30px',
+          color: '#9fe870',
+        })
+        .setOrigin(0.5),
+    );
   }
 
   onKey(e) {
@@ -178,8 +205,14 @@ export class GameOverScene extends Phaser.Scene {
       }
       return;
     }
+    if (this.mode !== 'board') return;
+    if (e.code === 'ArrowUp') this.board?.scroll(-1);
+    if (e.code === 'ArrowDown') this.board?.scroll(1);
     if (e.repeat || this.time.now < this.boardReadyAt) return;
-    if (e.key === 'Enter' || e.code === 'Space') {
+    if (e.code === 'KeyT') {
+      this.boardSource = this.boardSource === 'online' ? 'local' : 'online';
+      this.showBoard();
+    } else if (e.key === 'Enter' || e.code === 'Space') {
       sfx.select();
       this.scene.start('Game');
     } else if (e.key === 'Escape') {
@@ -203,6 +236,28 @@ export class GameOverScene extends Phaser.Scene {
     this.myIndex = addScore(entry);
     sfx.levelUp();
     this.time.removeAllEvents();
-    this.showBoard();
+    this.submitOnline(entry);
+  }
+
+  // Online nur eintragen, wenn es für die Top 100 reicht
+  async submitOnline(entry) {
+    this.showSaving();
+    await this.onlinePromise;
+    if (this.online === null) {
+      this.boardSource = 'local';
+      this.boardMsg = 'Online-Liste nicht erreichbar – lokal gespeichert.';
+    } else if (!qualifiesOnline(entry.score, this.online)) {
+      this.boardMsg = `Für die Online-Top-${ONLINE_MAX} hat es diesmal nicht gereicht.`;
+    } else {
+      try {
+        this.myId = await submitOnlineScore(entry);
+        this.online = await fetchOnlineScores();
+        const rank = this.online.findIndex((e) => e.id === this.myId) + 1;
+        this.boardMsg = rank > 0 ? `Online eingetragen – Platz ${rank}!` : 'Online eingetragen!';
+      } catch {
+        this.boardMsg = 'Online-Speichern fehlgeschlagen – lokal gespeichert.';
+      }
+    }
+    if (this.scene.isActive()) this.showBoard();
   }
 }

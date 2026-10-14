@@ -1,13 +1,12 @@
 import Phaser from 'phaser';
 import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT } from '../config.js';
-import { loadScores, formatTime } from '../systems/leaderboard.js';
+import { loadScores } from '../systems/leaderboard.js';
 import { sfx, toggleMute, isMuted } from '../audio/sfx.js';
 import { music } from '../audio/music.js';
 import { addButterflies } from '../gfx/ambient.js';
 import { VolumeSliders } from '../ui/VolumeSliders.js';
-
-const row = (rank, name, score, time) =>
-  `${rank} ${String(name).padEnd(12, ' ').slice(0, 12)} ${String(score).padStart(7, ' ')}  ${String(time).padStart(5, ' ')}`;
+import { LeaderboardView } from '../ui/LeaderboardView.js';
+import { fetchOnlineScores } from '../systems/firebase.js';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -79,32 +78,24 @@ export class MenuScene extends Phaser.Scene {
       .setDepth(10);
 
     this.panel(564, 340, 400, 410, 'BESTENLISTE');
-    const scores = loadScores();
-    if (!scores.length) {
-      this.add
-        .text(764, 520, 'Noch keine Einträge.\nSei der Erste!', {
-          fontFamily: FONT,
-          fontSize: '28px',
-          color: '#c9b99a',
-          align: 'center',
-        })
-        .setOrigin(0.5)
-        .setDepth(10);
-    } else {
-      this.add
-        .text(584, 384, row(' #', 'Name', 'Punkte', 'Zeit'), { fontFamily: FONT, fontSize: '25px', color: '#9fe870' })
-        .setDepth(10);
-      scores.slice(0, 10).forEach((s, i) => {
-        const line = row(String(i + 1).padStart(2, ' '), s.name, s.score, formatTime(s.time));
-        this.add
-          .text(584, 414 + i * 30, line, {
-            fontFamily: FONT,
-            fontSize: '25px',
-            color: i === 0 ? '#ffe14a' : '#f3ead2',
-          })
-          .setDepth(10);
+    this.boardTab = this.add
+      .text(764, 388, '', { fontFamily: FONT, fontSize: '21px', color: '#c9b99a' })
+      .setOrigin(0.5)
+      .setDepth(10);
+    this.board = new LeaderboardView(this, 582, 404, { rows: 10, rowH: 30, fontSize: 24, format: 'short', width: 350 });
+    this.boardSource = 'online';
+    this.online = undefined;
+    this.showBoard();
+    fetchOnlineScores()
+      .then((list) => (this.online = list))
+      .catch(() => (this.online = null))
+      .finally(() => {
+        if (this.scene.isActive()) this.showBoard();
       });
-    }
+    this.input.keyboard.on('keydown-T', () => {
+      this.boardSource = this.boardSource === 'online' ? 'local' : 'online';
+      this.showBoard();
+    });
 
     const start = this.add
       .text(GAME_W / 2, 792, 'LEERTASTE / ENTER zum Starten', {
@@ -127,7 +118,7 @@ export class MenuScene extends Phaser.Scene {
     this.updateMuteText();
 
     this.add
-      .text(12, 8, 'Highscores werden lokal im Browser gespeichert', {
+      .text(12, 8, 'Highscores: online (Top 100) und auf diesem Gerät', {
         fontFamily: FONT,
         fontSize: '20px',
         color: '#8a7a5a',
@@ -155,6 +146,21 @@ export class MenuScene extends Phaser.Scene {
     this.input.on('pointerdown', (p, over) => {
       if (!over.length) go();
     });
+  }
+
+  showBoard() {
+    const online = this.boardSource === 'online';
+    this.boardTab.setText(online ? 'Online (Top 100)  ·  T: Dieses Gerät' : 'Dieses Gerät  ·  T: Online');
+    if (online) {
+      if (this.online === undefined) this.board.setStatus('Lade Online-Bestenliste …');
+      else if (this.online === null) this.board.setStatus('Online-Liste nicht\nerreichbar.\nT: lokale Liste');
+      else if (!this.online.length) this.board.setStatus('Noch keine Einträge.\nSei der Erste!');
+      else this.board.setEntries(this.online);
+    } else {
+      const local = loadScores();
+      if (!local.length) this.board.setStatus('Noch keine Einträge.\nSei der Erste!');
+      else this.board.setEntries(local);
+    }
   }
 
   updateMuteText() {
