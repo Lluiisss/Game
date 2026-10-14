@@ -1,0 +1,26 @@
+rules_version = '2';
+// Sicherheitsregeln für die Online-Bestenliste.
+// In der Firebase-Konsole unter Firestore Database → Regeln einfügen und veröffentlichen.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /highscores/{entry} {
+      // Jeder darf die Bestenliste lesen
+      allow read: if true;
+      // Neue Einträge nur mit genau diesen Feldern und sinnvollen Werten
+      allow create: if request.resource.data.keys().hasOnly(['name', 'score', 'kills', 'hills', 'time', 'level', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 12
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score < 10000000
+        && request.resource.data.kills is int
+        && request.resource.data.hills is int
+        && request.resource.data.time is int
+        && request.resource.data.level is int
+        && request.resource.data.createdAt == request.time;
+      // Einträge können nicht geändert oder gelöscht werden
+      allow update, delete: if false;
+    }
+  }
+}
