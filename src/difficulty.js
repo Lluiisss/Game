@@ -32,7 +32,8 @@ export function bossInterval(t) {
 
 export function xpForLevel(level) {
   const l = level - 1;
-  return Math.round(8 + 6 * l + 0.7 * l * l);
+  // flache Kurve, damit auch spätere Level nicht ewig dauern
+  return Math.round(8 + 5 * l + 0.15 * l * l);
 }
 
 // Zufällige Maulwurfart, die zur Spielzeit passt (neue Arten kommen nach und nach)
@@ -47,8 +48,8 @@ export function rollKind(t) {
   return 'normal';
 }
 
-export function computeScore({ kills, bossKills, hillsRemoved, time }) {
-  return (kills - bossKills) * 10 + bossKills * 150 + hillsRemoved * 4 + Math.floor(time) * 2;
+export function computeScore({ kills, bossKills, gigaKills = 0, hillsRemoved, time }) {
+  return (kills - bossKills) * 10 + bossKills * 150 + gigaKills * 1000 + hillsRemoved * 4 + Math.floor(time) * 2;
 }
 
 // Automatischer Bonus pro Level (zusätzlich zu den gewählten Upgrades)

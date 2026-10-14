@@ -70,6 +70,8 @@ export class GameScene extends Phaser.Scene {
     this.elapsed = 0;
     this.kills = 0;
     this.bossKills = 0;
+    this.gigaKills = 0;
+    this.giga = null;
     this.hillsRemoved = 0;
     this.damageDealt = 0;
 
@@ -300,6 +302,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.pendingLevelUps > 0) this.openLevelUp();
     else if (this.omaPending) this.startOmaIntro();
+    else if (this.gigaPending) this.spawnGiga();
   }
 
   updateSpawning(dt) {
@@ -359,15 +362,19 @@ export class GameScene extends Phaser.Scene {
 
   moleWantsToEmerge(mole) {
     let pos;
-    if (mole.spawnNear) {
+    if (mole.spawnAt) {
+      pos = mole.spawnAt;
+      mole.spawnAt = null;
+    } else if (mole.spawnNear) {
       pos = this.posNear(mole.spawnNear.x, mole.spawnNear.y, 30, 80);
       mole.spawnNear = null;
     } else {
       pos = this.findSpawnPos(mole.boss);
     }
     const hpBase = D.hillHp(this.elapsed);
-    const small = mole.kind === 'baby';
-    const hill = new Hill(this, pos.x, pos.y, mole.boss, mole.boss ? hpBase * 4 : small ? hpBase * 0.5 : hpBase, small);
+    const size = mole.def.giga ? 1.9 : mole.kind === 'baby' ? 0.65 : 1;
+    const hillHp = mole.def.giga ? hpBase * 10 : mole.boss ? hpBase * 4 : size < 1 ? hpBase * 0.5 : hpBase;
+    const hill = new Hill(this, pos.x, pos.y, mole.boss, hillHp, size);
     this.hills.push(hill);
     mole.emerge(hill);
     this.dirtFx.explode(mole.boss ? 22 : 10, pos.x, hill.holeY);
@@ -398,12 +405,31 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: arrow, y: arrow.y - 10, duration: 300, yoyo: true, repeat: 4, onComplete: () => arrow.destroy() });
   }
 
-  // Fähigkeiten: Buddler buddelt, Doktor heilt
+  // Fähigkeiten: Buddler buddelt, Doktor heilt, Gigamaulwurf stampft
   onMoleAbility(mole) {
+    if (mole.def.slam) {
+      const s = mole.sprite;
+      this.tweens.add({ targets: s, scaleY: mole.def.scale * 0.75, scaleX: mole.def.scale * 1.15, duration: 120, yoyo: true });
+      this.time.delayedCall(120, () => {
+        if (mole.dead || !mole.hill) return;
+        this.cameras.main.shake(260, 0.01);
+        sfx.bonk();
+        sfx.boss();
+        const ring = this.add.circle(mole.hill.x, mole.hill.y - 10, 20).setStrokeStyle(6, 0x8a5a2a, 0.9).setDepth(8300);
+        this.tweens.add({ targets: ring, radius: 190, alpha: 0, duration: 500, onComplete: () => ring.destroy() });
+        this.dirtFx.explode(30, mole.hill.x, mole.hill.y - 10);
+        const n = 2 + Math.min(3, Math.floor(this.elapsed / 300));
+        for (let i = 0; i < n; i++) {
+          const pos = this.posNear(mole.hill.x, mole.hill.y, 100, 200);
+          this.hills.push(new Hill(this, pos.x, pos.y, false, D.hillHp(this.elapsed), 1));
+        }
+      });
+      return;
+    }
     if (mole.def.dig) {
       if (this.hills.filter((h) => h.digger === mole).length >= 3) return;
       const pos = this.posNear(mole.hill.x, mole.hill.y, 45, 75);
-      const hill = new Hill(this, pos.x, pos.y, false, D.hillHp(this.elapsed) * 0.6, true);
+      const hill = new Hill(this, pos.x, pos.y, false, D.hillHp(this.elapsed) * 0.6, 0.65);
       hill.digger = mole;
       this.hills.push(hill);
       this.dirtFx.explode(8, pos.x, hill.hitY);
@@ -539,11 +565,20 @@ export class GameScene extends Phaser.Scene {
     mole.die();
     this.kills += 1;
     this.starFx.explode(mole.boss ? 18 : 7, x, y);
+    if (mole.def.giga) {
+      this.gigaKills += 1;
+      this.giga = null;
+      if (this.gigaLabel) this.gigaLabel.destroy();
+      this.gigaLabel = null;
+      this.cameras.main.shake(600, 0.012);
+      this.starFx.explode(40, x, y);
+      this.dirtFx.explode(40, x, y);
+    }
     if (mole.boss) {
       this.bossKills += 1;
       sfx.bossKill();
       this.cameras.main.shake(250, 0.006);
-      this.banner('Boss besiegt!', '#9fe870');
+      this.banner(mole.def.giga ? 'GIGAMAULWURF BESIEGT!' : 'Boss besiegt!', '#9fe870');
     } else {
       sfx.kill();
     }
@@ -734,6 +769,31 @@ export class GameScene extends Phaser.Scene {
     if (moles.length) sfx.zap();
   }
 
+  // Alle 20 Level: der Gigamaulwurf erscheint in der Mitte des Rasens
+  spawnGiga() {
+    this.gigaPending = false;
+    const giga = new Mole(this, 'giga', D.moleHp(this.elapsed) * MOLE_KINDS.giga.hpMult, 1.4);
+    giga.spawnAt = { x: LAWN.x + LAWN.w / 2, y: LAWN.y + LAWN.h / 2 + 40 };
+    this.moles.push(giga);
+    this.giga = giga;
+    this.banner('GIGAMAULWURF!', '#ff3a3a', 'Er stampft auf den Boden und lässt überall Hügel wachsen!');
+    sfx.boss();
+    this.time.delayedCall(700, () => sfx.boss());
+    this.cameras.main.shake(900, 0.006);
+    if (this.gigaLabel) this.gigaLabel.destroy();
+    this.gigaLabel = this.add
+      .text(GAME_W / 2, LAWN.y + 6, 'GIGAMAULWURF', {
+        fontFamily: TITLE_FONT,
+        fontSize: '14px',
+        color: '#ffcf6a',
+        stroke: '#1e140d',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(9050)
+      .setVisible(false);
+  }
+
   // Große Ankündigung, danach kommt Oma durch das Gartentor herein.
   startOmaIntro() {
     this.omaPending = false;
@@ -921,8 +981,20 @@ export class GameScene extends Phaser.Scene {
   drawBars() {
     const g = this.bars;
     g.clear();
+    // Großer Lebensbalken für den Gigamaulwurf
+    const gm = this.giga;
+    if (gm && gm.hittable && this.gigaLabel) {
+      const w = 520;
+      const x = GAME_W / 2 - w / 2;
+      const y = LAWN.y + 26;
+      this.gigaLabel.setVisible(true);
+      g.fillStyle(0x1e140d, 1).fillRect(x - 3, y - 3, w + 6, 18);
+      g.fillStyle(0x5a1010, 1).fillRect(x, y, w, 12);
+      g.fillStyle(0xe8302a, 1).fillRect(x, y, Math.max(0, (gm.hp / gm.maxHp) * w), 12);
+      g.fillStyle(0xff8a7a, 1).fillRect(x, y, Math.max(0, (gm.hp / gm.maxHp) * w), 3);
+    } else if (this.gigaLabel) this.gigaLabel.setVisible(false);
     for (const m of this.moles) {
-      if (!m.hittable) continue;
+      if (!m.hittable || m.def.giga) continue;
       const w = m.boss ? 60 : 30;
       const x = m.hitX - w / 2;
       const y = m.baseY - m.visH - 9;
@@ -976,6 +1048,7 @@ export class GameScene extends Phaser.Scene {
     const score = D.computeScore({
       kills: this.kills,
       bossKills: this.bossKills,
+      gigaKills: this.gigaKills,
       hillsRemoved: this.hillsRemoved,
       time: this.elapsed,
     });
@@ -1008,6 +1081,7 @@ export class GameScene extends Phaser.Scene {
       this.xpNeed = D.xpForLevel(this.level);
       this.pendingLevelUps += 1;
       if (this.level >= OMA_LEVEL && !this.oma) this.omaPending = true;
+      if (this.level % 20 === 0) this.gigaPending = true;
     }
   }
 
@@ -1035,11 +1109,6 @@ export class GameScene extends Phaser.Scene {
       this.upgradeLevels[c.up.id] = (this.upgradeLevels[c.up.id] || 0) + 1;
       c.up.apply(this.stats, this);
     }
-  }
-
-  cartCleanup(n) {
-    const oldest = [...this.hills].filter((h) => !h.mole).sort((a, b) => b.age - a.age).slice(0, n);
-    oldest.forEach((h, i) => this.time.delayedCall(i * 120, () => this.removeHill(h)));
   }
 
   // ------------------------------------------------------------------ Pause & Ende
@@ -1075,6 +1144,7 @@ export class GameScene extends Phaser.Scene {
       time: this.elapsed,
       kills: this.kills,
       bossKills: this.bossKills,
+      gigaKills: this.gigaKills,
       hillsRemoved: this.hillsRemoved,
       level: this.level,
       weapon: this.weapon.name,

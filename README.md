@@ -25,6 +25,8 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
   Flitzer, Chiller, Angsthase (taucht bei Treffern ab), Buddler (buddelt Extra-Hügel),
   Panzer-Maulwurf (halber Schaden), Doktor-Maulwurf (heilt Nachbarn), Mama-Maulwurf
   (Babys beim Tod) und Boss-Maulwürfe.
+- Alle 20 Level erscheint in der Mitte der **Gigamaulwurf**: riesig, viel Leben, und bei
+  jedem Stampfer wachsen Hügel um ihn herum.
 - XP und Level-Ups: Jedes Level gibt automatisch etwas mehr Werte, dazu 3 Garten-Upgrades
   zur Auswahl.
 - Regelmäßig neue (teils alberne) Nahkampf-Gartengeräte mit Spezialeffekten: Spaten,
@@ -34,7 +36,7 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
 - Helfer (Gartenzwerg, Rasensprenger, Bienen, Igel, Mähroboter, Regenwolke,
   Gewitter-Wetterhahn) gibt es ab Level 3, spätestens jedes dritte Level ist einer im Angebot.
 - Ab **Level 15** kommt **Oma** (groß angekündigt) durch das Gartentor und haut mit
-  ihrer Bratpfanne mit.
+  ihrer Bratpfanne selbst mit.
 - Chiptune-Musik, die bei Gefahr und Bossen schneller und intensiver wird.
 - Die **Bestenliste** (Top 10) wird lokal im Browser gespeichert (localStorage).
 

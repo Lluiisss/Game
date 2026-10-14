@@ -99,6 +99,20 @@ function makeMoles(scene) {
     MOLE_PAL,
   );
 
+  // Gigamaulwurf: goldene Krone mit Rubin, rote Augen
+  const giga = [
+    '...y...yy...y...',
+    '...Y..YYYY..Y...',
+    '...YYYYeeYYYY...',
+    '...YYYYYYYYYY...',
+    '..fFFFFFFFFFFf..',
+    '..FFeeFFFFeeFF..',
+    '.fFFFFFFFFFFFFf.',
+    ...MOLE_BASE.slice(5),
+  ];
+  drawMap(scene, 'mole_giga', giga, MOLE_PAL);
+  drawMap(scene, 'mole_giga_dead', replaceRows(giga, { 5: '..FxFxFFFFxFxF..' }), MOLE_PAL);
+
   // Panzer-Maulwurf: Stahlhelm
   const armor = [
     '.....TTTTTT.....',
@@ -481,20 +495,6 @@ const ICONS = {
     '....KKK.....',
     '...KKKKK....',
     'GGGGGGGGGGGG',
-    '............',
-  ],
-  i_cart: [
-    '............',
-    '............',
-    '.BBBBBBBB...',
-    '.BbbbbbbBWWW',
-    '..BBBBBB....',
-    '...BBBB.....',
-    '...k..W.....',
-    '..kKk..W....',
-    '..kKk...W...',
-    '...k........',
-    '............',
     '............',
   ],
 };

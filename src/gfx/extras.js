@@ -26,6 +26,13 @@ function col(n, row) {
 }
 
 function makeWeapons(scene) {
+  // Omas Bratpfanne
+  drawMap(
+    scene,
+    'w_pan',
+    ['..kKKKk..', '.KKkkkKK.', 'KKkkkkkKK', 'KKkkkkkKK', 'KKkkkkkKK', '.KKkkkKK.', '..kKKKk..', '....K....', '....K....', '....W....', '....W....', '....W....'],
+    { K: '#1a1a1a', k: '#454548', W: '#3a2414' },
+  );
   drawMap(
     scene,
     'w_chicken',

@@ -54,6 +54,8 @@ export class OmaIntroScene extends Phaser.Scene {
       onComplete: () => {
         walk.remove();
         oma.setTexture('oma_down_0').setFlipX(false);
+        const pan = this.add.image(oma.x + 70, oma.y - 60, 'w_pan').setOrigin(0.5, 1).setScale(8).setRotation(0.5);
+        this.tweens.add({ targets: pan, rotation: -0.3, duration: 260, yoyo: true, repeat: -1 });
         this.tweens.add({ targets: oma, scaleY: 9.6, duration: 260, yoyo: true, repeat: -1 });
       },
     });

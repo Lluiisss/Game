@@ -192,18 +192,6 @@ export const UPGRADES = [
       s.storm += 1;
     },
   },
-  {
-    id: 'cart',
-    name: 'Schubkarre',
-    desc: 'Räumt sofort die 6 ältesten Hügel weg',
-    icon: 'i_cart',
-    max: 99,
-    weight: 0.5,
-    cond: (scene) => scene.hills.length >= 6,
-    apply: (s, scene) => {
-      scene.cartCleanup(6);
-    },
-  },
 ];
 
 // Helfer sind seltener als normale Verbesserungen – zuerst soll Opa selbst kämpfen.
@@ -250,7 +238,7 @@ export function rollChoices(scene) {
     (w) => w.id !== scene.weapon.id && w.tier >= scene.weapon.tier && scene.level >= w.minLevel,
   );
   const better = avail.filter((w) => w.tier > scene.weapon.tier);
-  const chance = 0.25 + scene.levelsSinceWeaponOffer * 0.12;
+  const chance = 0.16 + scene.levelsSinceWeaponOffer * 0.08;
   if (avail.length && Math.random() < chance) {
     const from = better.length && Math.random() < 0.75 ? better : avail;
     const w = from[Math.floor(Math.random() * from.length)];

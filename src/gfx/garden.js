@@ -170,7 +170,8 @@ export function makeGarden(scene) {
   drawBirdBath(ctx, 30, 112);
   drawVeggies(ctx, rng, 10, 140, 42, 56);
   drawBarrel(ctx, 30, 228);
-  [222, 252, 282].forEach((y) => drawGeraniumPot(ctx, rng, 514, y));
+  [218, 246].forEach((y) => drawGeraniumPot(ctx, rng, 514, y));
+  drawCellarStairs(ctx, 494, 274, 42, ly1 + 4 - 274);
 
   // --- Terrasse (nach Foto): Pergola mit Wein und Wagenrad, Sichtschutz,
   // dunkle Metallmöbel, zugeklappter Sonnenschirm, Geländer mit Geranien
@@ -195,15 +196,14 @@ export function makeGarden(scene) {
   // Bäume und Büsche zuletzt, sie ragen über den Zaun
   const trees = [
     [36, 26, 17, 'oak'],
-    [120, 22, 17, 'apple'],
+    [120, 22, 15, 'oak'],
     [200, 26, 11, 'bush'],
     [345, 26, 11, 'bush'],
-    [430, 22, 17, 'cherry'],
-    [512, 26, 16, 'oak'],
-    [28, 280, 15, 'apple'],
+    [438, 22, 18, 'mirabelle'],
+    [504, 28, 12, 'currant'],
+    [30, 268, 21, 'apple'],
     [516, 120, 13, 'cherry'],
-    [516, 310, 13, 'bush'],
-    [526, 200, 10, 'bush'],
+    [526, 196, 10, 'bush'],
   ];
   trees.forEach(([x, y, r, type], i) => drawTree(ctx, mulberry32(100 + i), x, y, r, type));
 
@@ -251,7 +251,7 @@ function rect(ctx, x, y, w, h, c) {
 function drawTree(ctx, rng, cx, cy, r, type) {
   // Schatten
   fillEllipse(ctx, rng, cx + 4, cy + r * 0.75, r * 0.95, r * 0.4, () => 'rgba(0,0,0,0.22)');
-  if (type !== 'bush') {
+  if (type !== 'bush' && type !== 'currant') {
     rect(ctx, cx - 2, cy + r * 0.4, 4, r * 0.55, '#5a3a1e');
     rect(ctx, cx - 2, cy + r * 0.4, 1, r * 0.55, '#7a5230');
   }
@@ -259,10 +259,12 @@ function drawTree(ctx, rng, cx, cy, r, type) {
     apple: ['#245c22', '#2f7030', '#3d8a38', '#56a64a'],
     oak: ['#1f4f20', '#2a6128', '#367833', '#4a9140'],
     cherry: ['#2a5e28', '#3a7a34', '#4a8f40', '#5fa64e'],
+    mirabelle: ['#2a5a24', '#367030', '#468a3a', '#5ca24c'],
+    currant: ['#1f4a22', '#2a5e2c', '#387438', '#4a8c48'],
     bush: ['#22502a', '#2d6533', '#3b7d3e', '#4f9650'],
   }[type];
   const noise = valueNoise(Math.floor(rng() * 1000), 3);
-  const ry = type === 'bush' ? r * 0.8 : r;
+  const ry = type === 'bush' || type === 'currant' ? r * 0.8 : r;
   fillEllipse(ctx, rng, cx, cy, r, ry, (x, y, d, rr) => {
     if (d > 0.82 && rr < 0.35) return null;
     const light = -x / r * 0.35 - y / ry * 0.45 + noise(cx + x, cy + y) * 0.6 - d * 0.3;
@@ -277,7 +279,7 @@ function drawTree(ctx, rng, cx, cy, r, type) {
     ctx.fillRect(Math.round(cx + Math.cos(a) * (r + 0.5)), Math.round(cy + Math.sin(a) * (ry + 0.5)), 1, 1);
   }
   // Früchte / Blüten
-  const n = Math.floor(r * 0.8);
+  const n = Math.floor(r * (type === 'currant' ? 2.2 : 0.8));
   for (let i = 0; i < n; i++) {
     const a = rng() * Math.PI * 2;
     const d = Math.sqrt(rng()) * r * 0.75;
@@ -289,6 +291,14 @@ function drawTree(ctx, rng, cx, cy, r, type) {
     } else if (type === 'cherry') {
       rect(ctx, x, y, 2, 2, '#ffb7d5');
       rect(ctx, x, y, 1, 1, '#ffffff');
+    } else if (type === 'mirabelle') {
+      rect(ctx, x, y, 2, 2, '#f2c230');
+      rect(ctx, x, y, 1, 1, '#fff07a');
+    } else if (type === 'currant') {
+      // Johannisbeer-Trauben
+      rect(ctx, x, y, 1, 1, '#e8302a');
+      rect(ctx, x + 1, y + 1, 1, 1, '#c01818');
+      rect(ctx, x, y + 2, 1, 1, '#e8302a');
     } else if (type === 'bush' && i % 2 === 0) {
       rect(ctx, x, y, 1, 1, '#f7d038');
     }
@@ -296,9 +306,10 @@ function drawTree(ctx, rng, cx, cy, r, type) {
 }
 
 function drawFence(ctx, W, bottom, gateX) {
-  const wood = '#efe4c8';
-  const shade = '#c9b994';
-  const dark = '#6e5a3a';
+  // dunkler Holzzaun
+  const wood = '#6a523e';
+  const shade = '#4e3c2e';
+  const dark = '#241a12';
   // oben: Latten von vorne, Lücke für das Tor
   const y0 = 1;
   for (const [x0, x1] of [
@@ -458,6 +469,27 @@ function drawBirdBath(ctx, x, y) {
   rect(ctx, x - 7, y - 3, 14, 1, '#c9c4b6');
   rect(ctx, x + 2, y - 5, 2, 2, '#4a6fa8');
   rect(ctx, x + 4, y - 4, 1, 1, '#f2c230');
+}
+
+// Kellertreppe rechts unten neben dem Rasen: Stufen werden nach unten dunkler
+function drawCellarStairs(ctx, x, y, w, h) {
+  rect(ctx, x - 2, y - 2, w + 4, h + 2, '#8a8a84');
+  const steps = 8;
+  const sh = Math.floor(h / steps);
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1);
+    const c = Math.round(170 - t * 120);
+    const col = `rgb(${c},${c - 2},${c - 8})`;
+    rect(ctx, x, y + i * sh, w, sh, col);
+    rect(ctx, x, y + i * sh + sh - 1, w, 1, `rgb(${c - 40},${c - 42},${c - 46})`);
+  }
+  // Kellertür ganz unten
+  rect(ctx, x + 10, y + steps * sh - 2, w - 20, 4, '#3a2414');
+  // Mauern und schwarzes Geländer
+  rect(ctx, x - 3, y - 2, 3, h + 2, '#b5b0a2');
+  rect(ctx, x + w, y - 2, 3, h + 2, '#b5b0a2');
+  rect(ctx, x + 1, y - 1, 1, h, '#1a1a1a');
+  for (let yy = y; yy < y + h; yy += 8) rect(ctx, x, yy, 3, 2, '#1a1a1a');
 }
 
 function drawCompost(ctx, x, y) {
