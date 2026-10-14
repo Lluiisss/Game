@@ -770,7 +770,7 @@ export class GameScene extends Phaser.Scene {
       this.waterFx.explode(1, ox + Math.cos(a) * radius * 0.8, oy + Math.sin(a) * radius * 0.8);
     }
     sfx.splash();
-    const dmg = this.attackDamage * (0.4 + 0.25 * lvl);
+    const dmg = this.attackDamage * (0.25 + 0.12 * lvl);
     for (const t of this.targetsNear(ox, oy, radius)) this.hit(t, dmg, { quiet: true, small: true });
   }
 
@@ -794,7 +794,7 @@ export class GameScene extends Phaser.Scene {
       const flash = this.add.rectangle(0, 0, GAME_W, GAME_H, 0xffffff, 0.18).setOrigin(0).setDepth(9300);
       this.tweens.add({ targets: flash, alpha: 0, duration: 140, onComplete: () => flash.destroy() });
       this.starFx.explode(6, tx, ty);
-      this.hit({ kind: 'mole', obj: m }, this.attackDamage * (2.2 + 0.4 * this.stats.storm), { quiet: true, color: '#8fd3ff' });
+      this.hit({ kind: 'mole', obj: m }, this.attackDamage * (1.1 + 0.2 * this.stats.storm), { quiet: true, color: '#8fd3ff' });
     }
     if (moles.length) sfx.zap();
   }
