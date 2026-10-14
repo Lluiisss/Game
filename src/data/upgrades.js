@@ -196,7 +196,7 @@ export const UPGRADES = [
 ];
 
 // Helfer sind seltener als normale Verbesserungen – zuerst soll Opa selbst kämpfen.
-const weightOf = (u) => u.weight ?? (u.helper ? 0.8 : 1);
+const weightOf = (u) => u.weight ?? (u.helper ? 1.1 : 1);
 
 function weightedPick(pool) {
   const total = pool.reduce((a, u) => a + weightOf(u), 0);

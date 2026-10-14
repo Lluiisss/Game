@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT, MAX_HILL_LOAD, BEEHIVES, OMA_SEAT, OMA_LEVEL } from '../config.js';
+import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT, MAX_HILL_LOAD, BEEHIVES, OMA_SEAT, OMA_LEVEL, PERSON_SCALE } from '../config.js';
 import * as D from '../difficulty.js';
 import { WEAPONS, TYPE_LABEL } from '../data/weapons.js';
 import { rollChoices } from '../data/upgrades.js';
@@ -94,12 +94,11 @@ export class GameScene extends Phaser.Scene {
 
     // Bis Level 15 sitzt Oma am Terrassentisch und schaut zu
     this.omaSitting = this.add
-      .image(OMA_SEAT.x, OMA_SEAT.y, 'oma_down_0')
+      .image(OMA_SEAT.x, OMA_SEAT.y, 'oma_sit')
       .setOrigin(0.5, 1)
-      .setScale(PX)
-      .setCrop(0, 0, 18, 11)
+      .setScale(PERSON_SCALE)
       .setDepth(-140);
-    this.tweens.add({ targets: this.omaSitting, y: OMA_SEAT.y - 2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.tweens.add({ targets: this.omaSitting, scaleY: PERSON_SCALE * 1.03, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 
     this.player = new Player(this, LAWN.x + LAWN.w / 2, LAWN.y + LAWN.h / 2 + 20);
     this.bars = this.add.graphics().setDepth(9000);

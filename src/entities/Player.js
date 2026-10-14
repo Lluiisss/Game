@@ -1,4 +1,4 @@
-import { PX, LAWN, PLAYER_SPEED } from '../config.js';
+import { PX, PERSON_SCALE, LAWN, PLAYER_SPEED } from '../config.js';
 
 const WALK_CYCLE = [1, 0, 2, 0];
 
@@ -14,8 +14,8 @@ export class Player {
     this.swinging = false;
     this.swingAngle = 0;
 
-    this.shadow = scene.add.image(x, y, 'shadow').setScale(PX * 1.3, PX).setAlpha(0.3);
-    this.sprite = scene.add.image(x, y, 'opa_down_0').setOrigin(0.5, 1).setScale(PX);
+    this.shadow = scene.add.image(x, y, 'shadow').setScale(PX * 1.9, PX * 1.4).setAlpha(0.3);
+    this.sprite = scene.add.image(x, y, 'opa_down_0').setOrigin(0.5, 1).setScale(PERSON_SCALE);
     this.tool = scene.add.image(x, y, 'w_rake').setOrigin(0.5, 1).setScale(PX);
   }
 
@@ -56,7 +56,7 @@ export class Player {
     const side = this.dir === 'left' || this.dir === 'right';
     this.sprite.setTexture(side ? `opa_side_${frame}` : `opa_${this.dir}_${frame}`);
     this.sprite.setFlipX(this.dir === 'left');
-    const bob = this.moving && frame !== 0 ? -PX : 0;
+    const bob = this.moving && frame !== 0 ? -PERSON_SCALE : 0;
     this.sprite.setPosition(this.x, this.y + bob).setDepth(this.y);
     this.shadow.setPosition(this.x, this.y - 2).setDepth(this.y - 40);
 
@@ -66,16 +66,16 @@ export class Player {
       t.setScale(PX);
       switch (this.dir) {
         case 'down':
-          t.setPosition(this.x + 12, this.y - 9 + bob).setRotation(0.35).setDepth(this.y + 1);
+          t.setPosition(this.x + 17, this.y - 14 + bob).setRotation(0.35).setDepth(this.y + 1);
           break;
         case 'up':
-          t.setPosition(this.x - 12, this.y - 9 + bob).setRotation(-0.35).setDepth(this.y - 1);
+          t.setPosition(this.x - 17, this.y - 14 + bob).setRotation(-0.35).setDepth(this.y - 1);
           break;
         case 'right':
-          t.setPosition(this.x + 6, this.y - 9 + bob).setRotation(0.6).setDepth(this.y + 1);
+          t.setPosition(this.x + 9, this.y - 14 + bob).setRotation(0.6).setDepth(this.y + 1);
           break;
         default:
-          t.setPosition(this.x - 6, this.y - 9 + bob).setRotation(-0.6).setDepth(this.y + 1);
+          t.setPosition(this.x - 9, this.y - 14 + bob).setRotation(-0.6).setDepth(this.y + 1);
       }
     }
   }
@@ -86,6 +86,6 @@ export class Player {
   }
 
   get cy() {
-    return this.y - 15;
+    return this.y - 22;
   }
 }

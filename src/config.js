@@ -5,6 +5,9 @@ export const GAME_H = 832;
 // Pixelart wird nativ klein gezeichnet und mit diesem Faktor hochskaliert.
 export const PX = 2;
 
+// Opa und Oma werden etwas größer dargestellt als der Rest
+export const PERSON_SCALE = 3;
+
 export const HUD_H = 88;
 
 // Der Rasen (Spielfeld). Drumherum liegt der Garten mit Zaun, Bäumen und Beeten.
@@ -39,4 +42,4 @@ export const BEEHIVES = [
 export const OMA_LEVEL = 15;
 
 // Omas Platz am Terrassentisch (Fußpunkt des Sprites, Bildschirmkoordinaten)
-export const OMA_SEAT = { x: 260, y: HUD_H + 688 };
+export const OMA_SEAT = { x: 260, y: HUD_H + 682 };

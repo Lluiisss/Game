@@ -6,7 +6,7 @@ export const FIRST_BOSS = 75;
 
 export function maxMoles(t) {
   // schon am Anfang mehr Druck, ab ca. Minute 3 deutlich mehr Maulwürfe gleichzeitig
-  return Math.min(3 + Math.floor(t / 26) + Math.floor(Math.max(0, t - 180) / 16), 60);
+  return Math.min(3 + Math.floor(t / 28) + Math.floor(Math.max(0, t - 180) / 20), 60);
 }
 
 export function spawnInterval(t) {
@@ -66,7 +66,7 @@ export function levelBonus(level) {
 
 // Später tauchen pro Spawn-Takt mehrere Maulwürfe gleichzeitig auf
 export function spawnBatch(t) {
-  return 1 + Math.floor(Math.max(0, t - 120) / 150);
+  return 1 + Math.floor(Math.max(0, t - 150) / 180);
 }
 
 // Obergrenze: höchstens 5 Angriffe pro Sekunde, egal wie viele Upgrades

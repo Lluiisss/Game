@@ -165,6 +165,8 @@ function makePerson(scene, prefix, maps, pal) {
 export function makePeople(scene) {
   makePerson(scene, 'opa', { down: OPA_DOWN, up: OPA_UP, side: OPA_SIDE }, OPA_PAL);
   makePerson(scene, 'oma', { down: OMA_DOWN, up: OMA_UP, side: OMA_SIDE }, OMA_PAL);
+  // Oma sitzend am Terrassentisch: Oberkörper und Schoß, die Beine sind unter dem Tisch
+  drawMap(scene, 'oma_sit', [...OMA_DOWN.slice(0, 12), '....PPPPPPPP....'], OMA_PAL);
   // Oma-Porträt für Ankündigung & Icon
   drawMap(scene, 'i_oma', [...OMA_DOWN, ...LEGS_FRONT[0]], OMA_PAL);
 }
