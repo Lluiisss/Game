@@ -16,6 +16,16 @@ const DIRT_TINTS = [0x6c4220, 0x87552a, 0x523117, 0xa16b37];
 const GRASS_TINTS = [0x5fa83d, 0x7cc255, 0x43892a];
 const MAX_FLOAT_TEXTS = 45;
 
+// Comic-Wörter und Effekte der lustigen Waffen
+const FX_WORDS = {
+  stun: ['QUIEK!', '#ffe14a'],
+  bonk: ['BONK!', '#ff9a5a'],
+  crack: ['KNALL!', '#ffffff'],
+  saw: ['BRUMMM!', '#ffcf6a'],
+  splash: ['PLATSCH!', '#8fd3ff'],
+};
+
+
 const dist = Phaser.Math.Distance.Between;
 
 export class GameScene extends Phaser.Scene {
@@ -54,6 +64,7 @@ export class GameScene extends Phaser.Scene {
     this.xp = 0;
     this.xpNeed = D.xpForLevel(1);
     this.levelsSinceWeaponOffer = 0;
+    this.levelsSinceHelper = 0;
     this.pendingLevelUps = 0;
 
     this.elapsed = 0;
@@ -495,14 +506,14 @@ export class GameScene extends Phaser.Scene {
     else this.damageHill(t.obj, dmg * this.stats.hillMult * (opts.hillFactor ?? 1), opts);
   }
 
-  rollCrit(dmg) {
-    const crit = Math.random() < this.stats.crit;
+  rollCrit(dmg, extra = 0) {
+    const crit = Math.random() < this.stats.crit + extra;
     return { dmg: crit ? dmg * 2 : dmg, crit };
   }
 
   damageMole(mole, rawDmg, opts = {}) {
     if (!mole.hittable) return;
-    const { dmg, crit } = opts.noCrit ? { dmg: rawDmg, crit: false } : this.rollCrit(rawDmg);
+    const { dmg, crit } = opts.noCrit ? { dmg: rawDmg, crit: false } : this.rollCrit(rawDmg, opts.extraCrit);
     const armored = !!mole.def.armor;
     const amount = Math.max(1, Math.round(dmg * (mole.def.armor || 1)));
     mole.hp -= amount;
@@ -553,7 +564,7 @@ export class GameScene extends Phaser.Scene {
     if (opts.silent) {
       amount = rawDmg;
     } else {
-      const { dmg, crit } = this.rollCrit(rawDmg);
+      const { dmg, crit } = this.rollCrit(rawDmg, opts.extraCrit);
       amount = Math.max(1, Math.round(dmg));
       this.damageDealt += amount;
       if (!opts.noText) {
@@ -621,7 +632,11 @@ export class GameScene extends Phaser.Scene {
       this.slamFx(ang, ix, iy, aoe);
     }
 
-    for (const t of hits) this.hit(t, dmg, { hillFactor: w.hillMult });
+    for (const t of hits) {
+      this.hit(t, dmg, { hillFactor: w.hillMult, extraCrit: w.fx === 'bonk' ? 0.15 : 0 });
+      if (w.fx === 'stun' && t.kind === 'mole' && !t.obj.dead) t.obj.stunT = 1.6;
+    }
+    if (w.fx && hits.length) this.weaponFx(w.fx, hits[0]);
   }
 
   // ------------------------------------------------------------------ Items & Helfer
@@ -729,7 +744,7 @@ export class GameScene extends Phaser.Scene {
 
   spawnOma() {
     this.oma = new Oma(this, GATE.x, GATE.y);
-    this.banner('Oma ist da!', '#ff8a8a', 'Sie haut ab jetzt mit ihrer Handtasche mit.');
+    this.banner('Oma ist da!', '#ff8a8a', 'Sie haut ab jetzt mit ihrer Bratpfanne mit.');
     this.time.addEvent({
       delay: 250,
       repeat: 8,
@@ -806,6 +821,32 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.shake(90, 0.004);
       sfx.hillHit();
     });
+  }
+
+  weaponFx(fx, t) {
+    const x = t.obj.hitX;
+    const y = t.obj.hitY;
+    if (fx === 'saw') this.dirtFx.explode(3, x, y);
+    if (fx === 'splash') this.waterFx.explode(10, x, y);
+    if (fx === 'bonk') this.cameras.main.shake(70, 0.003);
+    if (this.time.now < (this.nextFxWord || 0)) return;
+    this.nextFxWord = this.time.now + (fx === 'saw' ? 900 : 450);
+    const [word, color] = FX_WORDS[fx];
+    const txt = this.add
+      .text(x + Phaser.Math.Between(-14, 14), y - 34, word, {
+        fontFamily: TITLE_FONT,
+        fontSize: '18px',
+        color,
+        stroke: '#1e140d',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(9150)
+      .setAngle(Phaser.Math.Between(-15, 15))
+      .setScale(0.4);
+    this.tweens.add({ targets: txt, scale: 1, duration: 120, ease: 'Back.Out' });
+    this.tweens.add({ targets: txt, alpha: 0, y: y - 56, delay: 350, duration: 300, onComplete: () => txt.destroy() });
+    sfx[fx]?.();
   }
 
   floatText(x, y, msg, color = '#ffffff', size = 22, force = false) {
@@ -888,6 +929,13 @@ export class GameScene extends Phaser.Scene {
       g.fillStyle(0x1e140d, 1).fillRect(x - 1, y - 1, w + 2, 6);
       g.fillStyle(0x5a1010, 1).fillRect(x, y, w, 4);
       g.fillStyle(0xe8302a, 1).fillRect(x, y, Math.max(0, (m.hp / m.maxHp) * w), 4);
+      if (m.stunT > 0) {
+        // Kreisende Sternchen über betäubten Maulwürfen
+        for (let i = 0; i < 3; i++) {
+          const a = this.elapsed * 6 + (i * Math.PI * 2) / 3;
+          g.fillStyle(0xffe14a, 1).fillRect(m.hitX + Math.cos(a) * 14 - 2, y - 8 + Math.sin(a) * 4, 4, 4);
+        }
+      }
     }
     for (const h of this.hills) {
       if (h.hp >= h.maxHp || h.mole) continue;

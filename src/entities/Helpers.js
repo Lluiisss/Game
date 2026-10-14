@@ -237,7 +237,7 @@ export class Oma {
     this.shadow = scene.add.image(x, y, 'shadow').setScale(PX * 1.3, PX).setAlpha(0.3).setDepth(-400);
     this.sprite = scene.add.image(x, y, 'oma_down_0').setOrigin(0.5, 1).setScale(PX);
     this.label = scene.add
-      .text(x, y, 'Oma', { fontFamily: scene.fontFamily, fontSize: '16px', color: '#e8c7ff', stroke: '#1e140d', strokeThickness: 3 })
+      .text(x, y, 'Oma', { fontFamily: scene.fontFamily, fontSize: '16px', color: '#ff9a9a', stroke: '#1e140d', strokeThickness: 3 })
       .setOrigin(0.5, 1);
   }
 
@@ -303,10 +303,25 @@ export class Oma {
 
   swing(ang) {
     const g = this.scene.add.graphics().setDepth(8200);
-    g.fillStyle(0xe8c7ff, 0.3);
+    g.fillStyle(0xff9a9a, 0.3);
     g.slice(this.x, this.y - 14, 40, ang - 0.9, ang + 0.9, false);
     g.fillPath();
     this.scene.tweens.add({ targets: g, alpha: 0, duration: 160, onComplete: () => g.destroy() });
     this.scene.tweens.add({ targets: this.sprite, angle: { from: -12, to: 0 }, duration: 160 });
+    // Bratpfanne: BONG!
+    if (Math.random() < 0.35) {
+      sfx.pan();
+      const t = this.scene.add
+        .text(this.x + Math.cos(ang) * 30, this.y - 40, 'BONG!', {
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: '14px',
+          color: '#ff9a9a',
+          stroke: '#1e140d',
+          strokeThickness: 5,
+        })
+        .setOrigin(0.5)
+        .setDepth(9150);
+      this.scene.tweens.add({ targets: t, y: t.y - 20, alpha: 0, duration: 600, onComplete: () => t.destroy() });
+    }
   }
 }

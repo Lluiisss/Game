@@ -151,6 +151,23 @@ export const sfx = {
   buzz() {
     tone({ freq: 220, freqEnd: 260, dur: 0.08, type: 'sawtooth', vol: 0.03 });
   },
+  stun() {
+    tone({ freq: 900, freqEnd: 1600, dur: 0.08, type: 'square', vol: 0.07 });
+    tone({ freq: 1600, freqEnd: 700, dur: 0.12, type: 'square', vol: 0.06, delay: 0.08 });
+  },
+  bonk() {
+    tone({ freq: 160, freqEnd: 60, dur: 0.18, type: 'square', vol: 0.14 });
+  },
+  crack() {
+    noise({ dur: 0.06, vol: 0.2, freq: 5000, q: 0.3, type: 'highpass' });
+  },
+  saw() {
+    tone({ freq: 90, freqEnd: 110, dur: 0.3, type: 'sawtooth', vol: 0.06 });
+  },
+  pan() {
+    tone({ freq: 520, freqEnd: 480, dur: 0.25, type: 'triangle', vol: 0.12 });
+    tone({ freq: 1040, dur: 0.15, type: 'sine', vol: 0.05 });
+  },
   heal() {
     [660, 880, 1100].forEach((f, i) => tone({ freq: f, dur: 0.08, type: 'sine', vol: 0.06, delay: i * 0.05 }));
   },
