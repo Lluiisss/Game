@@ -26,6 +26,79 @@ function col(n, row) {
 }
 
 function makeWeapons(scene) {
+  const wood = { W: '#b07a45', w: '#7a5230' };
+  drawMap(
+    scene,
+    'w_broom',
+    ['Y.Y.Y.Y.Y', 'YyYyYyYyY', 'YYYYYYYYY', '.yYYYYYy.', '..rrrrr..', '....w....', ...col(14, '....W....')],
+    { ...wood, Y: '#d8b04a', y: '#a8802a', r: '#c0392b' },
+  );
+  drawMap(
+    scene,
+    'w_cultivator',
+    ['T...T...T', 'T...T...T', '.T..T..T.', '..TTTTT..', '....t....', '....w....', ...col(14, '....W....')],
+    { ...wood, T: '#d0d4d8', t: '#8b9096' },
+  );
+  drawMap(
+    scene,
+    'w_pickaxe',
+    ['TT.........TT', '.TTT.....TTT.', '...TTTTTTT...', '.....ttt.....', '......w......', ...col(15, '......W......')],
+    { ...wood, T: '#9aa0a8', t: '#5a5e64' },
+  );
+  drawMap(
+    scene,
+    'w_lopper',
+    ['T.....T', 'TT...TT', '.T...T.', '.TT.TT.', '..TtT..', '...k...', '..R.R..', ...col(6, '..R.R..'), '.R...R.', '.R...R.', 'RR...RR', 'RR...RR'],
+    { T: '#d0d4d8', t: '#8b9096', k: '#3a3a3a', R: '#3f9c3a' },
+  );
+  drawMap(
+    scene,
+    'w_axe',
+    ['..TTTT...', '.TTTTTT..', 'TTTTTTw..', 'TTTTTTW..', '.TTTTTw..', '..TT.W...', '.....W...', ...col(13, '....W....')],
+    { ...wood, T: '#b8bcc4' },
+  );
+  drawMap(
+    scene,
+    'w_dryer',
+    [
+      'g.......g.......g',
+      '.g......g......g.',
+      '..g.....g.....g..',
+      '...g....g....g...',
+      '....g...g...g....',
+      'ggggggggKgggggggg',
+      '....g...g...g....',
+      '...g....g....g...',
+      '..g.....g.....g..',
+      '........K........',
+      ...col(12, '........K........'),
+    ],
+    { g: '#e8e8e8', K: '#8b9096' },
+  );
+  drawMap(
+    scene,
+    'w_sprinkspin',
+    ['B.......B', '.B..Y..B.', '..BYYYB..', '.YYKKKYY.', '..BYYYB..', '.B..K..B.', 'B...K...B', ...col(14, '....G....')],
+    { B: '#8fd3ff', Y: '#f2c230', K: '#555555', G: '#3f9c3a' },
+  );
+  drawMap(
+    scene,
+    'w_mowerspin',
+    [
+      '.RRRRRRRR.',
+      'RRRRRRRRRR',
+      'RkkkkkkkkR',
+      'RkGGGGGGkR',
+      'RkkkkkkkkR',
+      'RRRRRRRRRR',
+      'k.RRRRRR.k',
+      'k........k',
+      '....kk....',
+      ...col(14, '....kk....'),
+      '..kkkkkk..',
+    ],
+    { R: '#d8352a', k: '#333333', G: '#56e04a' },
+  );
   // Omas Bratpfanne
   drawMap(
     scene,

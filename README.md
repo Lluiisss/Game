@@ -30,9 +30,11 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
 - XP und Level-Ups: Jedes Level gibt automatisch etwas mehr Werte, dazu 3 Garten-Upgrades
   zur Auswahl.
 - Regelmäßig neue (teils alberne) Nahkampf-Gartengeräte mit Spezialeffekten: Spaten,
-  Heckenschere, Gummihuhn (betäubt, QUIEK!), Riesen-Zucchini, Mistgabel, Gießkanne
-  (PLATSCH!), Schlauch-Peitsche (KNALL!), Sense, Vorschlaghammer, Zwergen-Keule (BONK!),
-  Motorsense und Kettensäge (BRUMMM!).
+  Heckenschere, Gummihuhn (betäubt, QUIEK!), Laubbesen, Riesen-Zucchini, Mistgabel,
+  Gießkanne (PLATSCH!), Gartenkralle, Schlauch-Peitsche (KNALL!), Sense, Vorschlaghammer,
+  Spitzhacke, Zwergen-Keule (BONK!), Astschere, Gartenaxt und Kettensäge (BRUMMM!).
+  Am Ende der Kette kommen die stärksten Rundumschlag-Waffen: Motorsense, Wäschespinne,
+  Kreisregner und das Rasenmäher-Karussell.
 - Helfer (Gartenzwerg, Rasensprenger, Bienenstöcke, Igel, Mähroboter, Regenwolke,
   Gewitter-Wetterhahn) gibt es ab Level 3, spätestens jedes dritte Level ist einer im Angebot.
   Jedes Bienen-Upgrade stellt einen neuen Bienenstock in den Garten, jedes weitere

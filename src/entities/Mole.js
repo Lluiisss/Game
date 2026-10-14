@@ -113,7 +113,7 @@ export const MOLE_KINDS = {
     r: 58,
     boss: true,
     giga: true,
-    slam: 2.8,
+    slam: 2.3,
     from: Infinity,
     weight: 0,
   },
