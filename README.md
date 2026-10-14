@@ -40,7 +40,8 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
 - Bis Level 15 sitzt **Oma** am Terrassentisch. Dann steht sie auf (groß angekündigt) und haut mit
   ihrer Bratpfanne selbst mit.
 - Chiptune-Musik, die bei Gefahr und Bossen schneller und intensiver wird.
-- Die **Bestenliste** (Top 10) wird lokal im Browser gespeichert (localStorage).
+- **Bestenliste:** Online-Top-100 über Firebase Firestore (man trägt sich mit Namen ein)
+  plus eine lokale Top-10 auf dem eigenen Gerät. Mit T wird umgeschaltet.
 
 ## Entwicklung
 
@@ -54,6 +55,16 @@ npm run preview  # Build lokal ansehen
 Alle Grafiken werden im Code als Pixelart erzeugt (`src/gfx/textures.js`), Soundeffekte
 werden mit der WebAudio-API synthetisiert (`src/audio/sfx.js`). Das Balancing steckt in
 `src/difficulty.js`, Waffen und Upgrades in `src/data/`.
+
+## Online-Bestenliste (Firebase)
+
+Die Konfiguration steht in `src/systems/firebase.js`. Einmalig in der Firebase-Konsole:
+
+1. **Firestore Database → Datenbank erstellen** (Produktionsmodus, z. B. `europe-west3`).
+2. Unter **Regeln** den Inhalt von `firestore.rules` einfügen und veröffentlichen.
+
+Angezeigt werden die besten 100 Einträge; online eingetragen wird nur, wer es in die
+Top 100 schafft. Ohne Verbindung speichert das Spiel nur lokal.
 
 ## Deployment
 
