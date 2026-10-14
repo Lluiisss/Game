@@ -97,7 +97,7 @@ export class GameScene extends Phaser.Scene {
       .image(OMA_SEAT.x, OMA_SEAT.y, 'oma_down_0')
       .setOrigin(0.5, 1)
       .setScale(PX)
-      .setCrop(0, 0, 22, 17)
+      .setCrop(0, 0, 18, 11)
       .setDepth(-140);
     this.tweens.add({ targets: this.omaSitting, y: OMA_SEAT.y - 2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 

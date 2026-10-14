@@ -66,16 +66,16 @@ export class Player {
       t.setScale(PX);
       switch (this.dir) {
         case 'down':
-          t.setPosition(this.x + 12, this.y - 12 + bob).setRotation(0.35).setDepth(this.y + 1);
+          t.setPosition(this.x + 12, this.y - 9 + bob).setRotation(0.35).setDepth(this.y + 1);
           break;
         case 'up':
-          t.setPosition(this.x - 12, this.y - 12 + bob).setRotation(-0.35).setDepth(this.y - 1);
+          t.setPosition(this.x - 12, this.y - 9 + bob).setRotation(-0.35).setDepth(this.y - 1);
           break;
         case 'right':
-          t.setPosition(this.x + 6, this.y - 12 + bob).setRotation(0.6).setDepth(this.y + 1);
+          t.setPosition(this.x + 6, this.y - 9 + bob).setRotation(0.6).setDepth(this.y + 1);
           break;
         default:
-          t.setPosition(this.x - 6, this.y - 12 + bob).setRotation(-0.6).setDepth(this.y + 1);
+          t.setPosition(this.x - 6, this.y - 9 + bob).setRotation(-0.6).setDepth(this.y + 1);
       }
     }
   }
@@ -86,6 +86,6 @@ export class Player {
   }
 
   get cy() {
-    return this.y - 20;
+    return this.y - 15;
   }
 }

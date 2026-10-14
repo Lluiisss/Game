@@ -279,14 +279,14 @@ export class Oma {
       this.retarget = 0.8;
       // Nahe Ziele bevorzugen (Maulwürfe nur leicht), sonst rennt Oma
       // Maulwürfen hinterher, die längst abgetaucht sind
-      this.target = this.scene.nearestTarget(this.x, this.y - 20, 2000, { molePriority: 40 });
+      this.target = this.scene.nearestTarget(this.x, this.y - 15, 2000, { molePriority: 40 });
     }
     let moving = false;
     if (this.target) {
       const tx = this.target.obj.hitX;
       const ty = this.target.obj.hitY;
       const dx = tx - this.x;
-      const dy = ty - (this.y - 20);
+      const dy = ty - (this.y - 15);
       const d = Math.hypot(dx, dy);
       const reach = 34 + this.target.r;
       if (d > reach) {
@@ -318,7 +318,7 @@ export class Oma {
     this.sprite.setTexture(side ? `oma_side_${f}` : `oma_${this.dir}_${f}`).setFlipX(this.dir === 'left');
     this.sprite.setPosition(this.x, this.y).setDepth(this.y);
     this.shadow.setPosition(this.x, this.y - 2);
-    this.label.setPosition(this.x, this.y - 52).setDepth(this.y + 2);
+    this.label.setPosition(this.x, this.y - 40).setDepth(this.y + 2);
     if (!this.swinging) {
       const holds = {
         down: [12, 0.4, 1],
@@ -327,7 +327,7 @@ export class Oma {
         left: [-6, -0.7, 1],
       }[this.dir];
       this.pan
-        .setPosition(this.x + holds[0], this.y - 12)
+        .setPosition(this.x + holds[0], this.y - 9)
         .setRotation(holds[1])
         .setDepth(this.y + holds[2]);
     }
@@ -339,7 +339,7 @@ export class Oma {
     const pan = this.pan;
     this.swinging = true;
     sc.tweens.killTweensOf(pan);
-    pan.setPosition(this.x, this.y - 18).setDepth(Math.sin(ang) < -0.3 ? this.y - 1 : this.y + 1);
+    pan.setPosition(this.x, this.y - 13).setDepth(Math.sin(ang) < -0.3 ? this.y - 1 : this.y + 1);
     const o = { a: ang - 1.1 };
     pan.setRotation(o.a + Math.PI / 2);
     sc.tweens.add({
@@ -356,7 +356,7 @@ export class Oma {
     });
     const g = sc.add.graphics().setDepth(8200);
     g.fillStyle(0xff9a9a, 0.28);
-    g.slice(this.x, this.y - 18, 44, ang - 1.1, ang + 1.1, false);
+    g.slice(this.x, this.y - 13, 44, ang - 1.1, ang + 1.1, false);
     g.fillPath();
     sc.tweens.add({ targets: g, alpha: 0, duration: 180, onComplete: () => g.destroy() });
     if (Math.random() < 0.4) sfx.pan();

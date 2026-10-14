@@ -46,13 +46,13 @@ export class MenuScene extends Phaser.Scene {
       .setDepth(10);
 
     // Opa + Rechen
-    const opa = this.add.image(GAME_W / 2 - 40, 318, 'opa_down_0').setScale(PX * 2).setOrigin(0.5, 1).setDepth(10);
+    const opa = this.add.image(GAME_W / 2 - 40, 318, 'opa_down_0').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
     this.add.image(GAME_W / 2 - 10, 304, 'w_rake').setScale(PX * 2.5).setOrigin(0.5, 1).setRotation(0.35).setDepth(9);
     this.add.image(GAME_W / 2 + 70, 320, 'hill_0').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
     const mole = this.add.image(GAME_W / 2 + 70, 284, 'mole').setScale(PX * 2.5).setOrigin(0.5, 1).setDepth(10);
     this.tweens.add({ targets: mole, scaleY: PX * 2.3, duration: 500, yoyo: true, repeat: -1 });
     this.tweens.add({ targets: opa, angle: 4, duration: 400, yoyo: true, repeat: -1 });
-    const oma = this.add.image(GAME_W / 2 - 130, 318, 'oma_side_0').setScale(PX * 1.8).setOrigin(0.5, 1).setDepth(10);
+    const oma = this.add.image(GAME_W / 2 - 130, 318, 'oma_side_0').setScale(PX * 2.2).setOrigin(0.5, 1).setDepth(10);
     this.tweens.add({ targets: oma, y: 312, duration: 300, yoyo: true, repeat: -1 });
     this.add.image(GAME_W / 2 + 170, 318, 'w_scythe').setScale(PX * 2).setOrigin(0.5, 1).setRotation(-0.5).setDepth(10);
 
