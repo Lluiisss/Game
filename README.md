@@ -12,7 +12,7 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
 | --- | --- |
 | Pfeiltasten / WASD | laufen (Opa haut automatisch in Laufrichtung zu) |
 | P / ESC | Pause (Q im Pausemenü = aufgeben) |
-| M | Ton an/aus |
+| M | Ton an/aus (Lautstärke für Musik und Sounds im Hauptmenü und Pausemenü) |
 | ← → + Leertaste/Enter, 1/2/3 oder Maus | Upgrade beim Level-Up wählen |
 
 ## Spielmechanik
@@ -33,9 +33,11 @@ Es gibt kein Ziel – nur überleben, so lange es geht.
   Heckenschere, Gummihuhn (betäubt, QUIEK!), Riesen-Zucchini, Mistgabel, Gießkanne
   (PLATSCH!), Schlauch-Peitsche (KNALL!), Sense, Vorschlaghammer, Zwergen-Keule (BONK!),
   Motorsense und Kettensäge (BRUMMM!).
-- Helfer (Gartenzwerg, Rasensprenger, Bienen, Igel, Mähroboter, Regenwolke,
+- Helfer (Gartenzwerg, Rasensprenger, Bienenstöcke, Igel, Mähroboter, Regenwolke,
   Gewitter-Wetterhahn) gibt es ab Level 3, spätestens jedes dritte Level ist einer im Angebot.
-- Ab **Level 15** kommt **Oma** (groß angekündigt) durch das Gartentor und haut mit
+  Jedes Bienen-Upgrade stellt einen neuen Bienenstock in den Garten, jedes weitere
+  Wolken-Upgrade macht die Regenwolke größer.
+- Bis Level 15 sitzt **Oma** am Terrassentisch. Dann steht sie auf (groß angekündigt) und haut mit
   ihrer Bratpfanne selbst mit.
 - Chiptune-Musik, die bei Gefahr und Bossen schneller und intensiver wird.
 - Die **Bestenliste** (Top 10) wird lokal im Browser gespeichert (localStorage).

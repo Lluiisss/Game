@@ -21,15 +21,22 @@ export const FONT = '"VT323", monospace';
 export const TITLE_FONT = '"Press Start 2P", monospace';
 
 // Ab dieser "Hügellast" ist der Rasen ruiniert (normaler Hügel = 1, Boss-Hügel = 3).
-export const MAX_HILL_LOAD = 50;
+export const MAX_HILL_LOAD = 55;
 
 export const PLAYER_SPEED = 140;
 
-// Position des Bienenstocks im Garten (Bildschirmkoordinaten)
-export const BEEHIVE = { x: 1028, y: HUD_H + 330 };
+// Plätze für Bienenstöcke im Garten (Bildschirmkoordinaten, Fußpunkt) –
+// jedes Bienen-Upgrade bekommt einen eigenen
+export const BEEHIVES = [
+  { x: 1028, y: HUD_H + 346 },
+  { x: 320, y: HUD_H + 76 },
+  { x: 60, y: HUD_H + 626 },
+  { x: 780, y: HUD_H + 76 },
+  { x: 1032, y: HUD_H + 596 },
+];
 
 // Ab diesem Level kommt Oma zu Hilfe
 export const OMA_LEVEL = 15;
 
-// Gartentor oben in der Mitte (hier kommt Oma herein)
-export const GATE = { x: GAME_W / 2, y: HUD_H + 22 };
+// Omas Platz am Terrassentisch (Fußpunkt des Sprites, Bildschirmkoordinaten)
+export const OMA_SEAT = { x: 260, y: HUD_H + 682 };

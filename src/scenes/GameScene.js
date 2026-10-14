@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT, MAX_HILL_LOAD, BEEHIVE, GATE, OMA_LEVEL } from '../config.js';
+import { GAME_W, GAME_H, PX, HUD_H, LAWN, FONT, TITLE_FONT, MAX_HILL_LOAD, BEEHIVES, OMA_SEAT, OMA_LEVEL } from '../config.js';
 import * as D from '../difficulty.js';
 import { WEAPONS, TYPE_LABEL } from '../data/weapons.js';
 import { rollChoices } from '../data/upgrades.js';
@@ -78,6 +78,8 @@ export class GameScene extends Phaser.Scene {
     this.moles = [];
     this.hills = [];
     this.helpers = [];
+    this.hives = [];
+    this.cloud = null;
     this.seenKinds = new Set();
     this.announceQueue = [];
     this.oma = null;
@@ -89,6 +91,15 @@ export class GameScene extends Phaser.Scene {
     this.timers = { sprinkler: 3, bees: 2, hedgehog: 3, storm: 2 };
     this.warnTimer = 0;
     this.isOver = false;
+
+    // Bis Level 15 sitzt Oma am Terrassentisch und schaut zu
+    this.omaSitting = this.add
+      .image(OMA_SEAT.x, OMA_SEAT.y, 'oma_down_0')
+      .setOrigin(0.5, 1)
+      .setScale(PX)
+      .setCrop(0, 0, 18, 13)
+      .setDepth(-140);
+    this.tweens.add({ targets: this.omaSitting, y: OMA_SEAT.y - 2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 
     this.player = new Player(this, LAWN.x + LAWN.w / 2, LAWN.y + LAWN.h / 2 + 20);
     this.bars = this.add.graphics().setDepth(9000);
@@ -218,6 +229,10 @@ export class GameScene extends Phaser.Scene {
     return this.stats.rateMult * this.bonus.rate;
   }
 
+  get attackCooldown() {
+    return Math.max(D.MIN_ATTACK_COOLDOWN, this.weapon.cooldown / this.attackRateMult);
+  }
+
   get attackRange() {
     return this.weapon.range * this.stats.rangeMult * this.bonus.range;
   }
@@ -245,7 +260,7 @@ export class GameScene extends Phaser.Scene {
     // Opa haut automatisch zu – man muss nur laufen und zielen.
     this.attackCd -= dt;
     if (this.attackCd <= 0) {
-      this.attackCd = this.weapon.cooldown / this.attackRateMult;
+      this.attackCd = this.attackCooldown;
       this.performAttack();
     }
 
@@ -271,6 +286,7 @@ export class GameScene extends Phaser.Scene {
 
     const load = this.hillLoad();
     if (load >= MAX_HILL_LOAD) {
+      this.updateHud(load);
       this.gameOver();
       return;
     }
@@ -686,17 +702,17 @@ export class GameScene extends Phaser.Scene {
         this.sprinkle();
       }
     }
-    if (st.bees > 0) {
-      tm.bees -= dt;
-      if (tm.bees <= 0) {
-        tm.bees = Math.max(1.5, 4 - 0.4 * st.bees);
-        if (this.moles.some((m) => m.hittable)) {
-          for (let i = 0; i < st.bees + 1; i++) {
-            this.helpers.push(new Bee(this, BEEHIVE.x + Phaser.Math.Between(-6, 6), BEEHIVE.y + Phaser.Math.Between(-6, 6)));
-          }
-          sfx.buzz();
-        }
+    // Jeder Bienenstock schickt regelmäßig zwei Bienen los
+    for (const hive of this.hives) {
+      hive.t -= dt;
+      if (hive.t > 0) continue;
+      hive.t = 5.5;
+      if (!this.moles.some((m) => m.hittable)) continue;
+      for (let i = 0; i < 2; i++) {
+        this.helpers.push(new Bee(this, hive.x + Phaser.Math.Between(-6, 6), hive.y - 10 + Phaser.Math.Between(-4, 4)));
       }
+      this.tweens.add({ targets: hive.sprite, scaleX: PX * 1.15, duration: 80, yoyo: true });
+      sfx.buzz();
     }
     if (st.hedgehog > 0) {
       tm.hedgehog -= dt;
@@ -724,7 +740,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   addCloud() {
-    this.helpers.push(new Cloud(this));
+    if (this.cloud) this.cloud.grow();
+    else {
+      this.cloud = new Cloud(this);
+      this.helpers.push(this.cloud);
+    }
+  }
+
+  // Jedes Bienen-Upgrade stellt einen neuen Bienenstock an eine andere Stelle im Garten
+  addBeehive() {
+    const spot = BEEHIVES[this.hives.length % BEEHIVES.length];
+    const sprite = this.add.image(spot.x, spot.y, 'beehive').setOrigin(0.5, 1).setScale(0).setDepth(-150);
+    this.tweens.add({ targets: sprite, scale: PX, duration: 400, ease: 'Back.Out' });
+    this.hives.push({ x: spot.x, y: spot.y, sprite, t: 1 + this.hives.length * 1.1 });
+    this.floatText(spot.x, spot.y - 40, 'Neuer Bienenstock!', '#ffe14a', 22, true);
   }
 
   sprinkle() {
@@ -803,7 +832,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   spawnOma() {
-    this.oma = new Oma(this, GATE.x, GATE.y);
+    // Oma steht vom Terrassentisch auf und läuft auf den Rasen
+    if (this.omaSitting) {
+      this.tweens.killTweensOf(this.omaSitting);
+      this.omaSitting.destroy();
+      this.omaSitting = null;
+    }
+    this.oma = new Oma(this, OMA_SEAT.x, OMA_SEAT.y, LAWN.bottom - 30);
     this.banner('Oma ist da!', '#ff8a8a', 'Sie haut ab jetzt mit ihrer Bratpfanne mit.');
     this.time.addEvent({
       delay: 250,
@@ -846,7 +881,7 @@ export class GameScene extends Phaser.Scene {
 
   swingFx(ang, arc, range) {
     const p = this.player;
-    const dur = Math.min(140, (this.weapon.cooldown / this.attackRateMult) * 700);
+    const dur = Math.min(140, this.attackCooldown * 700);
     this.toolSwing(ang - arc / 2, ang + arc / 2, dur, Math.min(1.8, this.rangeMult));
     const g = this.add.graphics().setDepth(8200);
     g.fillStyle(0xffffff, 0.22);
@@ -1061,7 +1096,7 @@ export class GameScene extends Phaser.Scene {
     );
 
     const w = this.weapon;
-    const aps = (this.attackRateMult / w.cooldown).toFixed(1);
+    const aps = (1 / this.attackCooldown).toFixed(1);
     this.hudStats.setText(
       `${w.name} (${TYPE_LABEL[w.type]})  |  Schaden ${Math.round(this.attackDamage)}  |  ` +
         `${aps} Angriffe/s  |  Reichweite ${Math.round(this.attackRange)}  |  ` +

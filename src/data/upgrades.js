@@ -35,11 +35,11 @@ export const UPGRADES = [
   {
     id: 'rate',
     name: 'Gartenhandschuhe',
-    desc: '+15 % Angriffstempo',
+    desc: '+10 % Angriffstempo',
     icon: 'i_rate',
-    max: 6,
+    max: 5,
     apply: (s) => {
-      s.rateMult += 0.15;
+      s.rateMult += 0.1;
     },
   },
   {
@@ -135,11 +135,12 @@ export const UPGRADES = [
     minLevel: 5,
     helper: true,
     name: 'Bienenstock',
-    desc: 'Bienen schwärmen aus und stechen Maulwürfe. Jede Stufe: mehr Bienen',
+    desc: 'Ein neuer Bienenstock im Garten – seine Bienen stechen Maulwürfe',
     icon: 'i_bees',
     max: 5,
-    apply: (s) => {
+    apply: (s, scene) => {
       s.bees += 1;
+      scene.addBeehive();
     },
   },
   {
@@ -172,9 +173,9 @@ export const UPGRADES = [
     minLevel: 7,
     helper: true,
     name: 'Regenwolke',
-    desc: 'Eine Wolke zieht über den Rasen und weicht Hügel und Maulwürfe auf',
+    desc: 'Eine Regenwolke weicht Hügel und Maulwürfe auf. Weitere Stufen machen sie größer',
     icon: 'i_cloud',
-    max: 3,
+    max: 4,
     apply: (s, scene) => {
       s.clouds += 1;
       scene.addCloud();
@@ -238,7 +239,7 @@ export function rollChoices(scene) {
     (w) => w.id !== scene.weapon.id && w.tier >= scene.weapon.tier && scene.level >= w.minLevel,
   );
   const better = avail.filter((w) => w.tier > scene.weapon.tier);
-  const chance = 0.16 + scene.levelsSinceWeaponOffer * 0.08;
+  const chance = 0.08 + scene.levelsSinceWeaponOffer * 0.07;
   if (avail.length && Math.random() < chance) {
     const from = better.length && Math.random() < 0.75 ? better : avail;
     const w = from[Math.floor(Math.random() * from.length)];

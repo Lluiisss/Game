@@ -1,7 +1,7 @@
 // Einfache, treibende Chiptune-Musik. Wird live per WebAudio erzeugt:
 // Bass, Arpeggio, Melodie und Schlagzeug. Die Intensität (0–2) und das
 // Tempo steigen, wenn es auf dem Rasen brenzlig wird.
-import { ac, masterNode, isMuted, onMuteChange } from './sfx.js';
+import { ac, masterNode, isMuted, onMuteChange, getVolume, onVolumeChange } from './sfx.js';
 
 const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
 
@@ -60,14 +60,17 @@ function out() {
   if (!a) return null;
   if (!gain) {
     gain = a.createGain();
-    gain.gain.value = isMuted() ? 0 : 0.55;
+    gain.gain.value = isMuted() ? 0 : 0.8 * getVolume('music');
     gain.connect(masterNode());
   }
   return a;
 }
 
 onMuteChange((m) => {
-  if (gain) gain.gain.value = m ? 0 : 0.55;
+  if (gain) gain.gain.value = m ? 0 : 0.8 * getVolume('music');
+});
+onVolumeChange((v) => {
+  if (gain && !isMuted()) gain.gain.value = 0.8 * v.music;
 });
 
 function note(a, freq, t, dur, type, vol) {

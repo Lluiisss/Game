@@ -5,7 +5,7 @@ import { MOLE_KINDS } from './entities/Mole.js';
 export const FIRST_BOSS = 90;
 
 export function maxMoles(t) {
-  return Math.min(2 + Math.floor(t / 30), 40);
+  return Math.min(2 + Math.floor(t / 34), 40);
 }
 
 export function spawnInterval(t) {
@@ -33,7 +33,7 @@ export function bossInterval(t) {
 export function xpForLevel(level) {
   const l = level - 1;
   // flache Kurve, damit auch spätere Level nicht ewig dauern
-  return Math.round(8 + 5 * l + 0.15 * l * l);
+  return Math.round(9 + 5.5 * l + 0.2 * l * l);
 }
 
 // Zufällige Maulwurfart, die zur Spielzeit passt (neue Arten kommen nach und nach)
@@ -57,7 +57,7 @@ export function levelBonus(level) {
   const l = level - 1;
   return {
     dmg: 1 + 0.025 * l,
-    rate: 1 + 0.01 * l,
+    rate: 1 + Math.min(0.15, 0.005 * l),
     range: 1 + Math.min(0.15, 0.005 * l),
     speed: 1 + Math.min(0.2, 0.006 * l),
   };
@@ -67,3 +67,6 @@ export function levelBonus(level) {
 export function spawnBatch(t) {
   return 1 + Math.floor(t / 400);
 }
+
+// Obergrenze: höchstens 5 Angriffe pro Sekunde, egal wie viele Upgrades
+export const MIN_ATTACK_COOLDOWN = 0.2;
