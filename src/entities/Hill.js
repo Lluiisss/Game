@@ -2,16 +2,16 @@ import Phaser from 'phaser';
 import { PX } from '../config.js';
 
 export class Hill {
-  constructor(scene, x, y, boss, hp, small = false) {
+  // size: 1 = normal, < 1 kleine Hügel (Babys, Buddler), > 1 Riesenhügel (Gigamaulwurf)
+  constructor(scene, x, y, boss, hp, size = 1) {
     this.scene = scene;
     this.x = x;
     this.y = y;
     this.boss = boss;
     this.maxHp = hp;
     this.hp = hp;
-    this.weight = boss ? 3 : small ? 0.5 : 1;
-    this.small = small;
-    const scale = small ? PX * 0.65 : PX;
+    this.weight = size > 1 ? 6 : boss ? 3 : size < 1 ? 0.5 : 1;
+    const scale = PX * size;
     this.mole = null;
     this.removed = false;
     this.age = 0;

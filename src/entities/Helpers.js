@@ -236,6 +236,8 @@ export class Oma {
     this.enterY = LAWN.y + 50;
     this.shadow = scene.add.image(x, y, 'shadow').setScale(PX * 1.3, PX).setAlpha(0.3).setDepth(-400);
     this.sprite = scene.add.image(x, y, 'oma_down_0').setOrigin(0.5, 1).setScale(PX);
+    this.pan = scene.add.image(x, y, 'w_pan').setOrigin(0.5, 1).setScale(PX);
+    this.swinging = false;
     this.label = scene.add
       .text(x, y, 'Oma', { fontFamily: scene.fontFamily, fontSize: '16px', color: '#ff9a9a', stroke: '#1e140d', strokeThickness: 3 })
       .setOrigin(0.5, 1);
@@ -247,7 +249,7 @@ export class Oma {
   }
 
   get speed() {
-    return 105 + Math.min(45, this.scene.level * 1.2);
+    return 145 + Math.min(55, this.scene.level * 1.5);
   }
 
   update(dt) {
@@ -261,8 +263,10 @@ export class Oma {
     }
     this.retarget -= dt;
     if (!this.target || !this.scene.targetAlive(this.target) || this.retarget <= 0) {
-      this.retarget = 1.2;
-      this.target = this.scene.nearestTarget(this.x, this.y - 14, 2000, { molePriority: 120 });
+      this.retarget = 0.8;
+      // Nahe Ziele bevorzugen (Maulwürfe nur leicht), sonst rennt Oma
+      // Maulwürfen hinterher, die längst abgetaucht sind
+      this.target = this.scene.nearestTarget(this.x, this.y - 14, 2000, { molePriority: 40 });
     }
     let moving = false;
     if (this.target) {
@@ -284,8 +288,11 @@ export class Oma {
       this.cd -= dt;
       if (d <= reach + 4 && this.cd <= 0) {
         this.cd = 0.8;
-        this.swing(Math.atan2(dy, dx));
-        this.scene.hit(this.target, this.damage, { small: true, quiet: true, hillFactor: 1.2 });
+        const ang = Math.atan2(dy, dx);
+        if (Math.abs(dx) > Math.abs(dy)) this.dir = dx > 0 ? 'right' : 'left';
+        else this.dir = dy > 0 ? 'down' : 'up';
+        this.swing(ang);
+        this.scene.hit(this.target, this.damage, { quiet: true, color: '#ff9a9a', hillFactor: 1.2 });
       }
     }
     this.render(moving);
@@ -299,20 +306,50 @@ export class Oma {
     this.sprite.setPosition(this.x, this.y).setDepth(this.y);
     this.shadow.setPosition(this.x, this.y - 2);
     this.label.setPosition(this.x, this.y - 38).setDepth(this.y + 2);
+    if (!this.swinging) {
+      const holds = {
+        down: [12, 0.4, 1],
+        up: [-12, -0.4, -1],
+        right: [6, 0.7, 1],
+        left: [-6, -0.7, 1],
+      }[this.dir];
+      this.pan
+        .setPosition(this.x + holds[0], this.y - 8)
+        .setRotation(holds[1])
+        .setDepth(this.y + holds[2]);
+    }
   }
 
+  // Pfanne schwingen wie Opa seinen Rechen
   swing(ang) {
-    const g = this.scene.add.graphics().setDepth(8200);
-    g.fillStyle(0xff9a9a, 0.3);
-    g.slice(this.x, this.y - 14, 40, ang - 0.9, ang + 0.9, false);
+    const sc = this.scene;
+    const pan = this.pan;
+    this.swinging = true;
+    sc.tweens.killTweensOf(pan);
+    pan.setPosition(this.x, this.y - 12).setDepth(Math.sin(ang) < -0.3 ? this.y - 1 : this.y + 1);
+    const o = { a: ang - 1.1 };
+    pan.setRotation(o.a + Math.PI / 2);
+    sc.tweens.add({
+      targets: o,
+      a: ang + 1.1,
+      duration: 160,
+      ease: 'Quad.Out',
+      onUpdate: () => pan.setRotation(o.a + Math.PI / 2),
+      onComplete: () => {
+        sc.time.delayedCall(80, () => {
+          this.swinging = false;
+        });
+      },
+    });
+    const g = sc.add.graphics().setDepth(8200);
+    g.fillStyle(0xff9a9a, 0.28);
+    g.slice(this.x, this.y - 12, 44, ang - 1.1, ang + 1.1, false);
     g.fillPath();
-    this.scene.tweens.add({ targets: g, alpha: 0, duration: 160, onComplete: () => g.destroy() });
-    this.scene.tweens.add({ targets: this.sprite, angle: { from: -12, to: 0 }, duration: 160 });
-    // Bratpfanne: BONG!
-    if (Math.random() < 0.35) {
-      sfx.pan();
-      const t = this.scene.add
-        .text(this.x + Math.cos(ang) * 30, this.y - 40, 'BONG!', {
+    sc.tweens.add({ targets: g, alpha: 0, duration: 180, onComplete: () => g.destroy() });
+    sfx.pan();
+    if (Math.random() < 0.5) {
+      const t = sc.add
+        .text(this.x + Math.cos(ang) * 34, this.y - 44, 'BONG!', {
           fontFamily: '"Press Start 2P", monospace',
           fontSize: '14px',
           color: '#ff9a9a',
@@ -320,8 +357,9 @@ export class Oma {
           strokeThickness: 5,
         })
         .setOrigin(0.5)
-        .setDepth(9150);
-      this.scene.tweens.add({ targets: t, y: t.y - 20, alpha: 0, duration: 600, onComplete: () => t.destroy() });
+        .setDepth(9150)
+        .setAngle(Phaser.Math.Between(-12, 12));
+      sc.tweens.add({ targets: t, y: t.y - 20, alpha: 0, duration: 600, onComplete: () => t.destroy() });
     }
   }
 }

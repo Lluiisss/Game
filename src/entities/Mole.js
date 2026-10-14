@@ -102,6 +102,21 @@ export const MOLE_KINDS = {
     weight: 1.3,
     babies: 3,
   },
+  giga: {
+    tex: 'mole_giga',
+    name: 'Gigamaulwurf',
+    hpMult: 30,
+    up: [99999, 99999],
+    under: [0.5, 0.5],
+    xp: 120,
+    scale: PX * 3,
+    r: 58,
+    boss: true,
+    giga: true,
+    slam: 2.8,
+    from: Infinity,
+    weight: 0,
+  },
   baby: { tex: 'mole', name: 'Baby', hpMult: 0.3, up: [1.5, 3.0], under: [0.3, 0.8], xp: 1, scale: PX * 0.7, r: 15, from: Infinity, weight: 0 },
   boss: {
     tex: 'mole_boss',
@@ -135,7 +150,7 @@ export class Mole {
     this.hill = null;
     this.dead = false;
     this.flash = 0;
-    this.abilityT = this.def.dig || this.def.heal || 0;
+    this.abilityT = this.def.dig || this.def.heal || this.def.slam || 0;
     this.fleeCd = 0;
     this.stunT = 0;
     this.wobble = Math.random() * 10;
@@ -213,7 +228,7 @@ export class Mole {
         if (this.abilityT > 0) {
           this.abilityT -= dt;
           if (this.abilityT <= 0) {
-            this.abilityT = this.def.dig || this.def.heal;
+            this.abilityT = this.def.dig || this.def.heal || this.def.slam;
             this.scene.onMoleAbility(this);
           }
         }
