@@ -38,7 +38,7 @@ export class Gnome {
       duration: 200,
       onComplete: () => {
         stone.destroy();
-        this.scene.hit(target, this.scene.attackDamage * 1.1, { quiet: true, small: true });
+        this.scene.hit(target, this.scene.attackDamage * 0.55, { quiet: true, small: true });
       },
     });
     return true;
@@ -81,7 +81,7 @@ export class Bee {
     this.y += Math.sin(a) * sp * dt;
     this.sprite.setPosition(this.x, this.y).setFlipX(Math.cos(a) < 0);
     if (this.target && dist(this.x, this.y, tx, ty) < 14) {
-      this.scene.hit(this.target, Math.max(5, this.scene.attackDamage * 0.5), { quiet: true, small: true, hillFactor: 0.5 });
+      this.scene.hit(this.target, Math.max(3, this.scene.attackDamage * 0.25), { quiet: true, small: true, hillFactor: 0.5 });
       this.stings -= 1;
       this.target = null;
       this.x += Phaser.Math.Between(-30, 30);
@@ -103,7 +103,7 @@ export class Hedgehog {
     this.x = fromLeft ? LAWN.x - 10 : LAWN.right + 10;
     this.y = ty;
     this.vx = (fromLeft ? 1 : -1) * 430;
-    this.dmg = scene.attackDamage * (1.6 + 0.4 * (level - 1));
+    this.dmg = scene.attackDamage * (0.8 + 0.2 * (level - 1));
     this.hitSet = new Set();
     this.sprite = scene.add.image(this.x, this.y, 'hedgehog').setScale(PX * 1.3).setDepth(8650);
   }
@@ -165,7 +165,7 @@ export class Mower {
     if (this.tick <= 0) {
       this.tick = 0.25;
       const near = this.scene.targetsNear(this.x, this.y, 30);
-      for (const t of near) this.scene.hit(t, this.scene.attackDamage * 0.55, { quiet: true, noText: true, hillFactor: 2 });
+      for (const t of near) this.scene.hit(t, this.scene.attackDamage * 0.2, { quiet: true, noText: true, hillFactor: 1.5 });
       if (near.length) this.scene.grassFx.explode(3, this.x, this.y);
     }
     return true;
@@ -222,7 +222,7 @@ export class Cloud {
     if (this.tick <= 0) {
       this.tick = 0.4;
       for (const t of this.scene.targetsNear(this.x, this.y, this.radius)) {
-        this.scene.hit(t, this.scene.attackDamage * 0.3, { quiet: true, noText: true, hillFactor: 1.6 });
+        this.scene.hit(t, this.scene.attackDamage * 0.12, { quiet: true, noText: true, hillFactor: 1.3 });
       }
     }
     return true;
