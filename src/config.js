@@ -39,4 +39,4 @@ export const BEEHIVES = [
 export const OMA_LEVEL = 15;
 
 // Omas Platz am Terrassentisch (Fußpunkt des Sprites, Bildschirmkoordinaten)
-export const OMA_SEAT = { x: 260, y: HUD_H + 682 };
+export const OMA_SEAT = { x: 260, y: HUD_H + 690 };

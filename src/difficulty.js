@@ -2,19 +2,20 @@ import { MOLE_KINDS } from './entities/Mole.js';
 
 // Alle Balancing-Kurven an einem Ort. t = überlebte Zeit in Sekunden.
 
-export const FIRST_BOSS = 90;
+export const FIRST_BOSS = 75;
 
 export function maxMoles(t) {
-  return Math.min(2 + Math.floor(t / 34), 40);
+  // schon am Anfang mehr Druck, ab ca. Minute 3 deutlich mehr Maulwürfe gleichzeitig
+  return Math.min(3 + Math.floor(t / 26) + Math.floor(Math.max(0, t - 180) / 16), 60);
 }
 
 export function spawnInterval(t) {
-  return Math.max(0.65, 3.2 - t / 90);
+  return Math.max(0.5, 2.6 - t / 90);
 }
 
 export function moleHp(t) {
   // ab ca. 8 Minuten wächst das Leben deutlich schneller (gegen Raketen & Co.)
-  return Math.round(18 + t * 0.12 + Math.pow(t / 60, 2) * 1.2 + Math.pow(Math.max(0, t - 480) / 60, 3) * 1.5);
+  return Math.round(20 + t * 0.12 + Math.pow(t / 60, 2) * 1.2 + Math.pow(Math.max(0, t - 480) / 60, 3) * 1.5);
 }
 
 export function hillHp(t) {
@@ -65,7 +66,7 @@ export function levelBonus(level) {
 
 // Später tauchen pro Spawn-Takt mehrere Maulwürfe gleichzeitig auf
 export function spawnBatch(t) {
-  return 1 + Math.floor(t / 400);
+  return 1 + Math.floor(Math.max(0, t - 120) / 150);
 }
 
 // Obergrenze: höchstens 5 Angriffe pro Sekunde, egal wie viele Upgrades

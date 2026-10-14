@@ -97,7 +97,7 @@ export class GameScene extends Phaser.Scene {
       .image(OMA_SEAT.x, OMA_SEAT.y, 'oma_down_0')
       .setOrigin(0.5, 1)
       .setScale(PX)
-      .setCrop(0, 0, 18, 13)
+      .setCrop(0, 0, 22, 17)
       .setDepth(-140);
     this.tweens.add({ targets: this.omaSitting, y: OMA_SEAT.y - 2, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 
@@ -137,8 +137,9 @@ export class GameScene extends Phaser.Scene {
       music.stop();
     });
 
-    this.moles.push(new Mole(this, 'normal', D.moleHp(0), 1.0));
-    this.moles.push(new Mole(this, 'normal', D.moleHp(0), 2.6));
+    this.moles.push(new Mole(this, 'normal', D.moleHp(0), 0.8));
+    this.moles.push(new Mole(this, 'normal', D.moleHp(0), 1.8));
+    this.moles.push(new Mole(this, 'normal', D.moleHp(0), 2.8));
 
     music.play('game');
     this.cameras.main.fadeIn(300, 0, 0, 0);
@@ -434,7 +435,7 @@ export class GameScene extends Phaser.Scene {
         const ring = this.add.circle(mole.hill.x, mole.hill.y - 10, 20).setStrokeStyle(6, 0x8a5a2a, 0.9).setDepth(8300);
         this.tweens.add({ targets: ring, radius: 190, alpha: 0, duration: 500, onComplete: () => ring.destroy() });
         this.dirtFx.explode(30, mole.hill.x, mole.hill.y - 10);
-        const n = 2 + Math.min(3, Math.floor(this.elapsed / 300));
+        const n = 3 + Math.min(4, Math.floor(this.elapsed / 200));
         for (let i = 0; i < n; i++) {
           const pos = this.posNear(mole.hill.x, mole.hill.y, 100, 200);
           this.hills.push(new Hill(this, pos.x, pos.y, false, D.hillHp(this.elapsed), 1));
@@ -684,7 +685,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const t of hits) {
-      this.hit(t, dmg, { hillFactor: w.hillMult, extraCrit: w.fx === 'bonk' ? 0.15 : 0 });
+      this.hit(t, dmg, { hillFactor: w.hillMult, extraCrit: (w.fx === 'bonk' ? 0.15 : 0) + (w.critBonus || 0) });
       if (w.fx === 'stun' && t.kind === 'mole' && !t.obj.dead) t.obj.stunT = 1.6;
     }
     if (w.fx && hits.length) this.weaponFx(w.fx, hits[0]);
@@ -711,7 +712,7 @@ export class GameScene extends Phaser.Scene {
       for (let i = 0; i < 2; i++) {
         this.helpers.push(new Bee(this, hive.x + Phaser.Math.Between(-6, 6), hive.y - 10 + Phaser.Math.Between(-4, 4)));
       }
-      this.tweens.add({ targets: hive.sprite, scaleX: PX * 1.15, duration: 80, yoyo: true });
+      this.tweens.add({ targets: hive.sprite, scaleX: PX * 2, duration: 80, yoyo: true });
       sfx.buzz();
     }
     if (st.hedgehog > 0) {
@@ -751,7 +752,7 @@ export class GameScene extends Phaser.Scene {
   addBeehive() {
     const spot = BEEHIVES[this.hives.length % BEEHIVES.length];
     const sprite = this.add.image(spot.x, spot.y, 'beehive').setOrigin(0.5, 1).setScale(0).setDepth(-150);
-    this.tweens.add({ targets: sprite, scale: PX, duration: 400, ease: 'Back.Out' });
+    this.tweens.add({ targets: sprite, scale: PX * 1.8, duration: 400, ease: 'Back.Out' });
     this.hives.push({ x: spot.x, y: spot.y, sprite, t: 1 + this.hives.length * 1.1 });
     this.floatText(spot.x, spot.y - 40, 'Neuer Bienenstock!', '#ffe14a', 22, true);
   }
