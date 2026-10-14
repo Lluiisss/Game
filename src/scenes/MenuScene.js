@@ -4,6 +4,7 @@ import { loadScores, formatTime } from '../systems/leaderboard.js';
 import { sfx, toggleMute, isMuted } from '../audio/sfx.js';
 import { music } from '../audio/music.js';
 import { addButterflies } from '../gfx/ambient.js';
+import { VolumeSliders } from '../ui/VolumeSliders.js';
 
 const row = (rank, name, score, time) =>
   `${rank} ${String(name).padEnd(12, ' ').slice(0, 12)} ${String(score).padStart(7, ' ')}  ${String(time).padStart(5, ' ')}`;
@@ -117,9 +118,11 @@ export class MenuScene extends Phaser.Scene {
       .setDepth(10);
     this.tweens.add({ targets: start, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
 
+    this.sliders = new VolumeSliders(this, GAME_W - 400, 24, { width: 180, gap: 38, fontSize: 22 });
+    this.input.keyboard.on('keydown', (e) => this.sliders.handleKey(e));
     this.muteText = this.add
-      .text(GAME_W - 12, 8, '', { fontFamily: FONT, fontSize: '22px', color: '#c9b99a' })
-      .setOrigin(1, 0)
+      .text(12, 46, '', { fontFamily: FONT, fontSize: '22px', color: '#c9b99a' })
+      .setOrigin(0, 0)
       .setDepth(10);
     this.updateMuteText();
 
@@ -134,8 +137,10 @@ export class MenuScene extends Phaser.Scene {
     music.play('menu');
     this.events.once('shutdown', () => music.stop());
 
+    let started = false;
     const go = (e) => {
-      if (e && e.repeat) return;
+      if ((e && e.repeat) || started) return;
+      started = true;
       sfx.unlock();
       sfx.select();
       this.scene.start('Game');
@@ -146,7 +151,10 @@ export class MenuScene extends Phaser.Scene {
       toggleMute();
       this.updateMuteText();
     });
-    this.input.once('pointerdown', () => go());
+    // Klick startet das Spiel – außer auf den Lautstärke-Reglern
+    this.input.on('pointerdown', (p, over) => {
+      if (!over.length) go();
+    });
   }
 
   updateMuteText() {

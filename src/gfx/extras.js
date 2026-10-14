@@ -154,6 +154,12 @@ function makeWeapons(scene) {
 // ---------------------------------------------------------------- Helfer
 
 function makeHelpers(scene) {
+  drawMap(
+    scene,
+    'beehive',
+    ['..YYYY..', '.yYYYYy.', 'YYYYYYYY', 'yyyyyyyy', 'YYYYYYYY', 'yyyKKyyy', '.YYKKYY.', '...WW...', '...WW...', '..WWWW..'],
+    { Y: '#f2c230', y: '#d8902a', K: '#3a2a1e', W: '#6e4524' },
+  );
   drawMap(scene, 'bee', ['.ww..', 'YkYkY', 'YkYkY', '.....'].slice(0, 3), {
     Y: '#f2c230',
     k: '#222222',

@@ -43,6 +43,9 @@ function valueNoise(seed, cell) {
 }
 
 // Native Größe: halbe Bildschirmauflösung (unterhalb der HUD-Leiste).
+// Terrassentisch (native Koordinaten, Mitte)
+export const TABLE = { x: 130, y: 349 };
+
 export const GARDEN_NATIVE = { w: 544, h: 372, lawnX: 64, lawnY: 50, lawnW: 416, lawnH: 272 };
 
 export function makeGarden(scene) {
@@ -166,27 +169,31 @@ export function makeGarden(scene) {
 
   // --- Deko links & rechts
   drawCompost(ctx, 512, 70);
-  drawBeehive(ctx, 514, 165);
   drawBirdBath(ctx, 30, 112);
   drawVeggies(ctx, rng, 10, 140, 42, 56);
   drawBarrel(ctx, 30, 228);
   [218, 246].forEach((y) => drawGeraniumPot(ctx, rng, 514, y));
-  drawCellarStairs(ctx, 494, 274, 42, ly1 + 4 - 274);
 
   // --- Terrasse (nach Foto): Pergola mit Wein und Wagenrad, Sichtschutz,
   // dunkle Metallmöbel, zugeklappter Sonnenschirm, Geländer mit Geranien
   const ty0 = ly1 + 4;
   drawScreen(ctx, 0, ty0, H);
-  drawChair(ctx, 26, ty0 + 14);
-  drawChair(ctx, 30, ty0 + 18);
-  drawChair(ctx, 70, ty0 + 24);
-  drawTable(ctx, 112, ty0 + 12, 36, 24);
-  drawChair(ctx, 160, ty0 + 20);
-  drawParasol(ctx, 190, ty0 + 26);
+  // gestapelte Stühle in der Ecke
+  drawChair(ctx, 26, ty0 + 14, 'up');
+  drawChair(ctx, 30, ty0 + 18, 'up');
+  // Tisch mit Stühlen ringsum (oben sitzt Oma, bis sie mithilft)
+  drawChair(ctx, TABLE.x, TABLE.y - 15, 'up');
+  drawChair(ctx, TABLE.x - 30, TABLE.y, 'left');
+  drawChair(ctx, TABLE.x + 30, TABLE.y, 'right');
+  drawChair(ctx, TABLE.x, TABLE.y + 16, 'down');
+  drawTable(ctx, TABLE.x - 20, TABLE.y - 8, 40, 16);
+  drawParasol(ctx, TABLE.x + 58, TABLE.y + 4);
   drawPot(ctx, rng, 250, ty0 + 14);
-  drawChair(ctx, 352, ty0 + 22);
-  drawPot(ctx, rng, 420, ty0 + 28);
-  drawRailing(ctx, rng, 290, W, ty0 + 3);
+  // Kellertreppe unten rechts neben der Mitte
+  drawCellarStairs(ctx, 296, ty0 + 3, 40, H - ty0 - 3);
+  drawChair(ctx, 420, ty0 + 24, 'up');
+  drawPot(ctx, rng, 470, ty0 + 30);
+  drawRailing(ctx, rng, 346, W, ty0 + 3);
   drawPergola(ctx, rng, 10, 236, ty0 + 2, H - 3);
 
   // Zaun links, rechts und oben (mit Gartentor in der Mitte)
@@ -195,14 +202,14 @@ export function makeGarden(scene) {
 
   // Bäume und Büsche zuletzt, sie ragen über den Zaun
   const trees = [
-    [36, 26, 17, 'oak'],
-    [120, 22, 15, 'oak'],
+    [36, 32, 17, 'oak'],
+    [120, 30, 15, 'oak'],
     [200, 26, 11, 'bush'],
     [345, 26, 11, 'bush'],
-    [438, 22, 18, 'mirabelle'],
+    [438, 30, 18, 'mirabelle'],
     [504, 28, 12, 'currant'],
-    [30, 268, 21, 'apple'],
-    [516, 120, 13, 'cherry'],
+    [32, 276, 21, 'apple'],
+    [516, 128, 13, 'cherry'],
     [526, 196, 10, 'bush'],
   ];
   trees.forEach(([x, y, r, type], i) => drawTree(ctx, mulberry32(100 + i), x, y, r, type));
@@ -249,42 +256,79 @@ function rect(ctx, x, y, w, h, c) {
 }
 
 function drawTree(ctx, rng, cx, cy, r, type) {
-  // Schatten
-  fillEllipse(ctx, rng, cx + 4, cy + r * 0.75, r * 0.95, r * 0.4, () => 'rgba(0,0,0,0.22)');
-  if (type !== 'bush' && type !== 'currant') {
-    rect(ctx, cx - 2, cy + r * 0.4, 4, r * 0.55, '#5a3a1e');
-    rect(ctx, cx - 2, cy + r * 0.4, 1, r * 0.55, '#7a5230');
-  }
+  const isBush = type === 'bush' || type === 'currant';
   const pal = {
-    apple: ['#245c22', '#2f7030', '#3d8a38', '#56a64a'],
-    oak: ['#1f4f20', '#2a6128', '#367833', '#4a9140'],
-    cherry: ['#2a5e28', '#3a7a34', '#4a8f40', '#5fa64e'],
-    mirabelle: ['#2a5a24', '#367030', '#468a3a', '#5ca24c'],
-    currant: ['#1f4a22', '#2a5e2c', '#387438', '#4a8c48'],
-    bush: ['#22502a', '#2d6533', '#3b7d3e', '#4f9650'],
+    apple: ['#1d4a1c', '#2a6428', '#3a8034', '#58a24a', '#7cc060'],
+    oak: ['#183f1a', '#235524', '#30702e', '#4a8c3e', '#66a852'],
+    cherry: ['#204c1e', '#2e6a2a', '#3e8636', '#5aa24a', '#7ebc62'],
+    mirabelle: ['#1f4a1c', '#2c6428', '#3c8034', '#58a046', '#78ba5a'],
+    bush: ['#1a4420', '#265a2c', '#33743a', '#4a8e4c', '#64a862'],
+    currant: ['#173e1e', '#22552a', '#2f6e36', '#468a48', '#5fa45c'],
   }[type];
-  const noise = valueNoise(Math.floor(rng() * 1000), 3);
-  const ry = type === 'bush' || type === 'currant' ? r * 0.8 : r;
-  fillEllipse(ctx, rng, cx, cy, r, ry, (x, y, d, rr) => {
-    if (d > 0.82 && rr < 0.35) return null;
-    const light = -x / r * 0.35 - y / ry * 0.45 + noise(cx + x, cy + y) * 0.6 - d * 0.3;
-    if (light > 0.45) return pal[3];
-    if (light > 0.15) return pal[2];
-    if (light > -0.15) return pal[1];
-    return pal[0];
-  });
-  // Outline
-  ctx.fillStyle = 'rgba(15,30,12,0.55)';
-  for (let a = 0; a < Math.PI * 2; a += 0.05) {
-    ctx.fillRect(Math.round(cx + Math.cos(a) * (r + 0.5)), Math.round(cy + Math.sin(a) * (ry + 0.5)), 1, 1);
+  // Krone etwas nach oben versetzt, damit der Stamm darunter sichtbar ist
+  const ccy = isBush ? cy : cy - r * 0.55;
+  // Schatten am Boden
+  fillEllipse(ctx, rng, cx + r * 0.25, cy + r * 0.55, r * 1.0, r * 0.38, () => 'rgba(0,0,0,0.22)');
+  // Stamm mit Wurzeln und Rinde
+  if (!isBush) {
+    const tw = Math.max(4, Math.round(r * 0.32));
+    const top = Math.round(ccy + r * 0.3);
+    const bottom = Math.round(cy + r * 0.75);
+    for (let y = top; y <= bottom; y++) {
+      const w = tw + (y >= bottom - 1 ? 2 : 0);
+      for (let x = -Math.floor(w / 2); x < Math.ceil(w / 2); x++) {
+        let col = x < -w / 4 ? '#7a5634' : x > w / 4 ? '#4a3018' : '#5e3e20';
+        if ((y + x * 3) % 5 === 0) col = '#3e2810';
+        rect(ctx, cx + x, y, 1, 1, col);
+      }
+    }
+    rect(ctx, cx - tw / 2 - 2, bottom, 2, 1, '#4a3018');
+    rect(ctx, cx + tw / 2, bottom, 2, 1, '#4a3018');
   }
-  // Früchte / Blüten
-  const n = Math.floor(r * (type === 'currant' ? 2.2 : 0.8));
+  // Krone aus mehreren Laub-Klumpen
+  const lobes = [{ x: 0, y: 0, r: r * 0.66 }];
+  const n = isBush ? 5 : 7;
   for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.5;
+    const d = r * (0.42 + rng() * 0.12);
+    lobes.push({ x: Math.cos(a) * d, y: Math.sin(a) * d * (isBush ? 0.75 : 0.9), r: r * (0.42 + rng() * 0.14) });
+  }
+  const noise = valueNoise(Math.floor(rng() * 1000), 2);
+  const inside = (x, y) => {
+    let best = null;
+    for (const l of lobes) {
+      const dx = x - l.x;
+      const dy = y - l.y;
+      const d = Math.hypot(dx, dy) / l.r;
+      if (d <= 1 && (!best || d < best.d)) best = { d, dx, dy, l };
+    }
+    return best;
+  };
+  const R = Math.ceil(r * 1.2);
+  for (let y = -R; y <= R; y++) {
+    for (let x = -R; x <= R; x++) {
+      const hit = inside(x, y);
+      if (!hit) continue;
+      const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+      let col;
+      if (edge) col = '#0f2a10';
+      else {
+        // Licht von oben links, pro Klumpen schattiert, unten dunkler
+        const light =
+          (-hit.dx / hit.l.r) * 0.35 - (hit.dy / hit.l.r) * 0.5 - (y / r) * 0.35 + (noise(cx + x, ccy + y) - 0.5) * 0.7;
+        col = light > 0.6 ? pal[4] : light > 0.25 ? pal[3] : light > -0.1 ? pal[2] : light > -0.45 ? pal[1] : pal[0];
+      }
+      rect(ctx, Math.round(cx + x), Math.round(ccy + y), 1, 1, col);
+    }
+  }
+  // Früchte / Beeren / Blüten
+  const count = Math.floor(r * (type === 'currant' ? 2.2 : 0.9));
+  for (let i = 0; i < count; i++) {
     const a = rng() * Math.PI * 2;
-    const d = Math.sqrt(rng()) * r * 0.75;
+    const d = Math.sqrt(rng()) * r * 0.8;
     const x = Math.round(cx + Math.cos(a) * d);
-    const y = Math.round(cy + Math.sin(a) * d * (ry / r));
+    const y = Math.round(ccy + Math.sin(a) * d * 0.85);
+    if (!inside(x - cx, y - ccy)) continue;
     if (type === 'apple') {
       rect(ctx, x, y, 2, 2, '#d8352a');
       rect(ctx, x, y, 1, 1, '#ff7a6a');
@@ -295,7 +339,6 @@ function drawTree(ctx, rng, cx, cy, r, type) {
       rect(ctx, x, y, 2, 2, '#f2c230');
       rect(ctx, x, y, 1, 1, '#fff07a');
     } else if (type === 'currant') {
-      // Johannisbeer-Trauben
       rect(ctx, x, y, 1, 1, '#e8302a');
       rect(ctx, x + 1, y + 1, 1, 1, '#c01818');
       rect(ctx, x, y + 2, 1, 1, '#e8302a');
@@ -370,7 +413,7 @@ function drawVine(ctx, rng, x0, x1, y, density = 0.5) {
 }
 
 function drawPergola(ctx, rng, x0, x1, y0, y1) {
-  for (let x = x0 + 6; x < x1; x += 14) rect(ctx, x, y0, 2, y1 - y0, 'rgba(30,22,16,0.75)');
+  for (let x = x0 + 6; x < x1; x += 14) rect(ctx, x, y0, 1, y1 - y0, 'rgba(30,22,16,0.35)');
   rect(ctx, x0, y0, x1 - x0, 3, BEAM);
   rect(ctx, x0, y1 - 3, x1 - x0, 3, BEAM);
   for (const x of [x0, x1 - 4]) {
@@ -388,11 +431,16 @@ function drawScreen(ctx, x, y0, y1) {
   for (let i = 0; i < 8; i += 4) rect(ctx, x + i, y0, 1, y1 - y0, '#4a3e34');
 }
 
-function drawChair(ctx, x, y) {
+// Metallstuhl von oben; back = Seite der Rückenlehne (vom Tisch weg)
+function drawChair(ctx, x, y, back = 'up') {
   rect(ctx, x - 5, y + 6, 12, 2, 'rgba(0,0,0,0.25)');
-  rect(ctx, x - 5, y - 6, 11, 3, '#2a2c30');
-  rect(ctx, x - 5, y - 3, 11, 9, '#3a3d42');
-  for (let i = -4; i < 6; i += 2) for (let j = -2; j < 5; j += 2) rect(ctx, x + i, y + j, 1, 1, '#5a5e64');
+  rect(ctx, x - 5, y - 5, 11, 11, '#3a3d42');
+  for (let i = -4; i < 6; i += 2) for (let j = -4; j < 6; j += 2) rect(ctx, x + i, y + j, 1, 1, '#5a5e64');
+  const bar = '#2a2c30';
+  if (back === 'up') rect(ctx, x - 5, y - 8, 11, 3, bar);
+  if (back === 'down') rect(ctx, x - 5, y + 6, 11, 3, bar);
+  if (back === 'left') rect(ctx, x - 8, y - 5, 3, 11, bar);
+  if (back === 'right') rect(ctx, x + 6, y - 5, 3, 11, bar);
 }
 
 function drawTable(ctx, x, y, w, h) {
@@ -509,9 +557,3 @@ function drawBarrel(ctx, x, y) {
   rect(ctx, x - 5, y - 9, 4, 1, '#ffffff');
 }
 
-function drawBeehive(ctx, x, y) {
-  rect(ctx, x - 1, y + 6, 2, 8, '#6e4524');
-  const rows = [6, 10, 12, 12, 10];
-  rows.forEach((w, i) => rect(ctx, x - w / 2, y - 8 + i * 3, w, 3, i % 2 ? '#e0a030' : '#f2c230'));
-  rect(ctx, x - 1, y + 2, 2, 2, '#3a2a1e');
-}

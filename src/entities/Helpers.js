@@ -184,8 +184,18 @@ export class Cloud {
     this.retarget = 0;
     this.tx = this.x;
     this.ty = this.y;
+    this.size = 1;
     this.shadow = scene.add.ellipse(this.x, this.y, this.radius * 2, this.radius * 0.9, 0x1a3a5a, 0.18).setDepth(-300);
     this.sprite = scene.add.image(this.x, this.y - 70, 'cloud').setScale(PX * 1.6).setDepth(8800).setAlpha(0.92);
+  }
+
+  // Weitere Upgrades machen die Wolke größer statt neue Wolken zu bringen
+  grow() {
+    this.size += 0.35;
+    this.radius = 70 * this.size;
+    this.shadow.setSize(this.radius * 2, this.radius * 0.9);
+    this.shadow.setDisplaySize(this.radius * 2, this.radius * 0.9);
+    this.scene.tweens.add({ targets: this.sprite, scale: PX * 1.6 * this.size, duration: 500, ease: 'Back.Out' });
   }
 
   update(dt) {
@@ -205,7 +215,9 @@ export class Cloud {
     }
     this.sprite.setPosition(this.x, this.y - 70 + Math.sin(this.scene.elapsed * 2) * 3);
     this.shadow.setPosition(this.x, this.y);
-    this.scene.rainFx.emitParticleAt(this.x + Phaser.Math.Between(-55, 55), this.y - 62);
+    for (let i = 0; i < Math.ceil(this.size); i++) {
+      this.scene.rainFx.emitParticleAt(this.x + Phaser.Math.Between(-55, 55) * this.size, this.y - 62);
+    }
     this.tick -= dt;
     if (this.tick <= 0) {
       this.tick = 0.4;
@@ -222,18 +234,18 @@ export class Cloud {
 const WALK = [1, 0, 2, 0];
 
 export class Oma {
-  constructor(scene, x, y) {
+  constructor(scene, x, y, enterY) {
     this.scene = scene;
     this.x = x;
     this.y = y;
-    this.dir = 'down';
+    this.dir = 'up';
     this.walkT = 0;
     this.cd = 0;
     this.target = null;
     this.retarget = 0;
-    // Zuerst durch das Gartentor auf den Rasen laufen
+    // Zuerst vom Terrassentisch auf den Rasen laufen
     this.entering = true;
-    this.enterY = LAWN.y + 50;
+    this.enterY = enterY;
     this.shadow = scene.add.image(x, y, 'shadow').setScale(PX * 1.3, PX).setAlpha(0.3).setDepth(-400);
     this.sprite = scene.add.image(x, y, 'oma_down_0').setOrigin(0.5, 1).setScale(PX);
     this.pan = scene.add.image(x, y, 'w_pan').setOrigin(0.5, 1).setScale(PX);
@@ -254,10 +266,11 @@ export class Oma {
 
   update(dt) {
     if (this.entering) {
-      this.y += 90 * dt;
+      const dir = Math.sign(this.enterY - this.y);
+      this.y += dir * 90 * dt;
       this.walkT += dt;
-      this.dir = 'down';
-      if (this.y >= this.enterY) this.entering = false;
+      this.dir = dir < 0 ? 'up' : 'down';
+      if (dir === 0 || Math.sign(this.enterY - this.y) !== dir) this.entering = false;
       this.render(true);
       return true;
     }
@@ -346,8 +359,8 @@ export class Oma {
     g.slice(this.x, this.y - 12, 44, ang - 1.1, ang + 1.1, false);
     g.fillPath();
     sc.tweens.add({ targets: g, alpha: 0, duration: 180, onComplete: () => g.destroy() });
-    sfx.pan();
-    if (Math.random() < 0.5) {
+    if (Math.random() < 0.4) sfx.pan();
+    if (Math.random() < 0.25) {
       const t = sc.add
         .text(this.x + Math.cos(ang) * 34, this.y - 44, 'BONG!', {
           fontFamily: '"Press Start 2P", monospace',
