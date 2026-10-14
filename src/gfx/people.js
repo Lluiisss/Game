@@ -126,12 +126,12 @@ const OMA_UP = [
 ];
 
 const OMA_SIDE = [
-  '....hlHHl.......',
-  '...hlHhHlH......',
-  '...hHlhSSSSS....',
-  '...hlHhSSgES....',
-  '...hHlhSSSSS....',
-  '.....hlSSrS.....',
+  '.....hlHHl......',
+  '....hlHhHlH.....',
+  '....hHlSSSSS....',
+  '....hlhSSgES....',
+  '....hHsSSSSS....',
+  '.....SSSSrS.....',
   '......sss.......',
   '.....DDDD.......',
   '.....DDDDD......',
